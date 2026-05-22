@@ -1,0 +1,722 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三国杀台词鉴赏 · 单页阅读</title>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <link rel="stylesheet" href="xuanzhi-theme.css">
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem("sgs-quote-theme");
+                var theme = stored === "dark" ? "dark" : "light";
+                document.documentElement.dataset.theme = theme;
+            } catch (_error) {
+                document.documentElement.dataset.theme = "light";
+            }
+        })();
+    </script>
+    <style>
+        html, body {
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        body {
+            display: flex;
+        }
+
+        .page-shell {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex: 1;
+            height: 100vh;
+            min-height: 0;
+        }
+
+        aside#sidebar {
+            width: 300px;
+            border-right: 1px solid var(--border-color);
+            display: flex;
+            flex-direction: column;
+            flex-shrink: 0;
+            height: 100vh;
+            position: sticky;
+            top: 0;
+            transition: width 0.28s ease, border-color 0.28s ease;
+        }
+
+        aside#sidebar.is-collapsed {
+            width: 0;
+            border-right-color: transparent;
+            overflow: hidden;
+        }
+
+        aside#sidebar.is-collapsed > * {
+            visibility: hidden;
+        }
+
+        .sidebar-header {
+            padding: 32px 24px 18px;
+            border-bottom: 1px dashed var(--hairline);
+        }
+
+        .sidebar-header .eyebrow {
+            margin: 0;
+            color: var(--accent-color);
+            font-size: 0.74rem;
+            letter-spacing: 0.36em;
+        }
+
+        .sidebar-header h1 {
+            margin: 12px 0 16px;
+            font-family: "KaiTi", "STKaiti", "Source Han Serif SC", serif;
+            font-size: 1.6rem;
+            color: var(--text-main);
+            letter-spacing: 0.06em;
+        }
+
+        .search-box {
+            width: 100%;
+            box-sizing: border-box;
+            padding: 10px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-soft);
+            color: var(--text-main);
+            outline: none;
+            font: inherit;
+        }
+
+        .search-box:focus {
+            border-color: var(--accent-color);
+            box-shadow: 0 0 0 4px var(--accent-soft);
+        }
+
+        .sidebar-list {
+            flex: 1;
+            overflow-y: auto;
+            padding: 12px 0;
+        }
+
+        .hero-group-title {
+            padding: 10px 24px;
+            font-size: 0.86rem;
+            color: var(--text-sec);
+            margin-top: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            font-family: "KaiTi", "STKaiti", serif;
+            letter-spacing: 0.08em;
+        }
+
+        .hero-group-title:hover {
+            color: var(--accent-color);
+        }
+
+        .hero-group-list { display: none; }
+        .hero-group-list.expanded { display: block; }
+
+        .nav-item {
+            padding: 9px 28px;
+            cursor: pointer;
+            font-size: 0.96rem;
+            border-left: 3px solid transparent;
+            transition: background 0.18s, color 0.18s, border-color 0.18s;
+        }
+
+        .nav-item:hover {
+            background: var(--bg-soft);
+        }
+
+        .nav-item.active {
+            background: var(--accent-soft);
+            border-left-color: var(--accent-color);
+            color: var(--accent-color);
+            font-weight: 600;
+        }
+
+        .sidebar-footer {
+            margin-top: auto;
+            padding: 16px 24px 22px;
+            border-top: 1px dashed var(--hairline);
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .sidebar-footer a {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            gap: 8px;
+            padding: 9px 14px;
+            border-radius: 999px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-soft);
+            color: var(--text-main);
+            font-family: "KaiTi", "STKaiti", serif;
+            text-decoration: none;
+            letter-spacing: 0.16em;
+        }
+
+        .sidebar-footer a:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        main {
+            flex: 1;
+            padding: 56px clamp(28px, 5vw, 64px) 64px;
+            overflow-y: auto;
+            max-height: 100vh;
+        }
+
+        .content-container {
+            max-width: 880px;
+            margin: 0 auto;
+        }
+
+        .empty-state {
+            text-align: center;
+            margin-top: 18vh;
+            color: var(--text-sec);
+        }
+
+        .empty-state h2 {
+            font-family: "KaiTi", "STKaiti", serif;
+            font-size: 2.2rem;
+            color: var(--text-main);
+            margin: 0 0 14px;
+            letter-spacing: 0.12em;
+        }
+
+        .empty-state p {
+            margin: 6px 0;
+            letter-spacing: 0.08em;
+        }
+
+        .empty-seal {
+            display: inline-block;
+            margin-top: 24px;
+            width: 96px;
+            height: 96px;
+            border: 2px solid var(--accent-color);
+            border-radius: 18px;
+            color: var(--accent-color);
+            font-family: "KaiTi", "STKaiti", serif;
+            font-size: 2.4rem;
+            line-height: 92px;
+            opacity: 0.7;
+        }
+
+        .hero-title-area {
+            text-align: center;
+            margin-bottom: 44px;
+            padding: 32px clamp(20px, 4vw, 38px);
+            border-radius: 22px;
+            background: linear-gradient(140deg, var(--bg-card), rgba(255, 250, 232, 0.4));
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        [data-theme="dark"] .hero-title-area {
+            background: linear-gradient(140deg, var(--bg-card), rgba(20, 16, 10, 0.7));
+        }
+
+        .hero-title-area::before,
+        .hero-title-area::after {
+            content: "";
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border: 1px solid var(--seal-line);
+        }
+
+        .hero-title-area::before {
+            left: 14px;
+            top: 14px;
+            border-right: none;
+            border-bottom: none;
+        }
+
+        .hero-title-area::after {
+            right: 14px;
+            bottom: 14px;
+            border-left: none;
+            border-top: none;
+        }
+
+        .hero-title-area h2 {
+            font-size: 2.4rem;
+            color: var(--text-main);
+            margin: 0;
+            letter-spacing: 0.06em;
+        }
+
+        .hero-title-area .sub-title {
+            color: var(--text-sec);
+            margin-top: 12px;
+            font-size: 1rem;
+            letter-spacing: 0.18em;
+        }
+
+        .skill-section {
+            margin-bottom: 52px;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+
+        .skill-title {
+            display: inline-block;
+            margin-bottom: 22px;
+            padding: 0 14px 0 16px;
+            color: var(--accent-color);
+            font-size: 1.5rem;
+            letter-spacing: 0.1em;
+            border-left: 3px double var(--accent-color);
+        }
+
+        .quote-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 18px;
+            padding: 24px 26px;
+            margin-bottom: 18px;
+            box-shadow: var(--shadow);
+            position: relative;
+        }
+
+        .quote-card::before {
+            content: "";
+            position: absolute;
+            inset: 8px;
+            border: 1px solid var(--hairline);
+            border-radius: 14px;
+            pointer-events: none;
+            opacity: 0.6;
+        }
+
+        .quote-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 18px;
+            padding-bottom: 14px;
+            border-bottom: 1px dashed var(--hairline);
+            gap: 16px;
+        }
+
+        .quote-text {
+            font-size: 1.24rem;
+            color: var(--text-main);
+            font-family: "KaiTi", "STKaiti", serif;
+            line-height: 1.85;
+            flex: 1;
+        }
+
+        .audio-wrapper { flex-shrink: 0; }
+
+        .audio-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 42px;
+            height: 42px;
+            border-radius: 50%;
+            background: var(--bg-soft);
+            color: var(--text-sec);
+            border: 1px solid var(--border-color);
+            cursor: pointer;
+            font-size: 1rem;
+            transition: all 0.2s;
+        }
+
+        .audio-btn.has-audio {
+            color: var(--accent-color);
+            border-color: var(--seal-line);
+        }
+
+        .audio-btn.has-audio:hover {
+            background: var(--accent-color);
+            color: var(--paper-warm);
+            transform: scale(1.05);
+        }
+
+        .audio-btn.disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+
+        .explanation-box {
+            color: var(--text-main);
+            line-height: 2;
+        }
+
+        .explanation-box p { margin: 8px 0; }
+        .explanation-box strong { color: var(--accent-color); font-weight: 600; }
+        .explanation-box ul { padding-left: 22px; margin: 10px 0; }
+        .explanation-box li { margin-bottom: 6px; }
+        .explanation-box code {
+            padding: 2px 6px;
+            border-radius: 4px;
+            background: var(--code-bg);
+        }
+        .explanation-box blockquote {
+            margin: 12px 0;
+            padding: 8px 16px;
+            border-left: 3px solid var(--accent-color);
+            background: var(--bg-soft);
+            color: var(--text-sec);
+        }
+
+        .detail-footer {
+            margin-top: 56px;
+            padding-top: 22px;
+            border-top: 1px solid var(--hairline);
+            text-align: right;
+            color: var(--text-sec);
+            font-size: 0.85rem;
+            letter-spacing: 0.18em;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .sidebar-toggle {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            position: fixed;
+            top: 12px;
+            left: 312px;
+            z-index: 1000;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
+            cursor: pointer;
+            font-size: 1rem;
+            box-shadow: var(--shadow);
+            transform: translateX(-50%);
+            transition: left 0.28s ease, transform 0.28s ease, color 0.2s, border-color 0.2s;
+        }
+
+        .sidebar-toggle.is-collapsed {
+            left: 12px;
+            transform: translateX(0);
+        }
+
+        .sidebar-toggle:hover {
+            color: var(--accent-color);
+            border-color: var(--accent-color);
+        }
+
+        @media (max-width: 768px) {
+            .page-shell { flex-direction: column; }
+
+            aside#sidebar {
+                position: fixed;
+                top: 0;
+                left: 0;
+                right: 0;
+                width: 100%;
+                height: auto;
+                max-height: 0;
+                overflow: hidden;
+                border-right: none;
+                border-bottom: 1px solid var(--border-color);
+                background: var(--bg-card);
+                transition: max-height 0.3s ease;
+                z-index: 50;
+            }
+
+            aside#sidebar.sidebar-expanded {
+                max-height: 70vh;
+                overflow-y: auto;
+            }
+
+            main {
+                padding: 64px 16px 48px;
+                max-height: none;
+            }
+
+            .sidebar-toggle {
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                left: 12px;
+                transform: translateX(0);
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+    <button class="sidebar-toggle" id="sidebarToggle" aria-label="切换侧边栏">☰</button>
+
+    <div class="page-shell">
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <p class="eyebrow">SGS QUOTE</p>
+                <h1>三国杀台词鉴赏</h1>
+                <input type="text" class="search-box" id="searchInput" placeholder="搜索武将或皮肤…">
+            </div>
+
+            <div class="sidebar-list" id="sidebarList"></div>
+
+            <div class="sidebar-footer">
+                <a href="/">回到 Next 首页</a>
+                <a href="CRUD.html">前往后台编辑</a>
+            </div>
+        </aside>
+
+        <main>
+            <div class="content-container" id="contentArea">
+                <div class="empty-state">
+                    <h2>烹茶静读</h2>
+                    <p>请在左侧选择一位武将。</p>
+                    <p>或在搜索框中输入名字、皮肤。</p>
+                    <span class="empty-seal" aria-hidden="true">阅</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="樱花散落.js"></script>
+    <script src="xuanzhi-theme.js"></script>
+    <script>
+        const sidebarListEl = document.getElementById('sidebarList');
+        const contentAreaEl = document.getElementById('contentArea');
+        const searchInput = document.getElementById('searchInput');
+        const sidebar = document.getElementById('sidebar');
+        const sidebarToggle = document.getElementById('sidebarToggle');
+
+        const API_BASE_URL = '/api';
+        let allData = [];
+
+        fetchAllData().then(() => {
+            renderList(groupData(allData));
+        });
+        initSidebarToggle();
+
+        async function fetchAllData() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/quotes`);
+                if (!response.ok) throw new Error('获取数据失败');
+                allData = await response.json();
+                return allData;
+            } catch (error) {
+                console.error('获取数据错误:', error);
+                contentAreaEl.innerHTML = `
+                    <div class="empty-state">
+                        <h2>数据未到位</h2>
+                        <p>无法加载列表，稍后再试。</p>
+                    </div>
+                `;
+                return [];
+            }
+        }
+
+        async function fetchQuoteByHeroAndSkin(hero, skin) {
+            try {
+                const response = await fetch(`${API_BASE_URL}/quotes?hero=${encodeURIComponent(hero)}&skin=${encodeURIComponent(skin)}`);
+                if (!response.ok) throw new Error('获取详细数据失败');
+                const data = await response.json();
+                return data[0] || null;
+            } catch (error) {
+                console.error('获取详细数据错误:', error);
+                alert('加载详细数据失败');
+                return null;
+            }
+        }
+
+        function groupData(data) {
+            const groups = {};
+            data.forEach(item => {
+                if (!groups[item.hero]) groups[item.hero] = [];
+                groups[item.hero].push(item);
+            });
+            return groups;
+        }
+
+        function renderList(groups, defaultExpand = false) {
+            sidebarListEl.innerHTML = '';
+
+            for (const hero in groups) {
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'hero-group-title';
+                groupTitle.innerHTML = `<span>${escapeHtml(hero)}</span><span>${defaultExpand ? '▼' : '▶'}</span>`;
+
+                const groupList = document.createElement('div');
+                groupList.className = `hero-group-list ${defaultExpand ? 'expanded' : ''}`;
+
+                groupTitle.addEventListener('click', () => {
+                    const isExpanded = groupList.classList.toggle('expanded');
+                    groupTitle.querySelector('span:last-child').innerText = isExpanded ? '▼' : '▶';
+                });
+
+                groups[hero].forEach(item => {
+                    const navItem = document.createElement('div');
+                    navItem.className = 'nav-item';
+                    navItem.innerText = item.skin;
+                    navItem.addEventListener('click', async () => {
+                        document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                        navItem.classList.add('active');
+
+                        const detailData = await fetchQuoteByHeroAndSkin(item.hero, item.skin);
+                        if (detailData) {
+                            renderContent(detailData);
+                        }
+
+                        if (window.innerWidth < 768) {
+                            sidebar.classList.remove('sidebar-expanded');
+                            sidebarToggle.innerText = '☰';
+                        }
+                    });
+                    groupList.appendChild(navItem);
+                });
+
+                sidebarListEl.appendChild(groupTitle);
+                sidebarListEl.appendChild(groupList);
+            }
+        }
+
+        function renderContent(item) {
+            let html = '';
+
+            html += `
+                <div class="hero-title-area">
+                    <h2>${escapeHtml(item.hero)} · ${escapeHtml(item.skin)}</h2>
+                    <div class="sub-title">台词深度鉴赏与解析</div>
+                </div>
+            `;
+
+            if (item.skills && Array.isArray(item.skills)) {
+                item.skills.forEach(skill => {
+                    html += `<section class="skill-section">`;
+                    html += `<div class="skill-title">${escapeHtml(skill.name || '')}</div>`;
+
+                    if (skill.quotes && Array.isArray(skill.quotes)) {
+                        skill.quotes.forEach(quote => {
+                            const explanationHtml = quote.explanation
+                                ? marked.parse(quote.explanation)
+                                : '<span style="color:var(--text-sec);font-style:italic">暂无解析</span>';
+
+                            const hasAudio = quote.audio && quote.audio.trim() !== '';
+                            const audioBtnClass = hasAudio ? 'audio-btn has-audio' : 'audio-btn disabled';
+                            const audioAttr = hasAudio ? `onclick="playAudio('${quote.audio}')"` : 'title="暂无音频"';
+
+                            html += `
+                                <div class="quote-card">
+                                    <div class="quote-header">
+                                        <div class="quote-text">「${escapeHtml(quote.text || '')}」</div>
+                                        <div class="audio-wrapper">
+                                            <button class="${audioBtnClass}" ${audioAttr}>
+                                                ${hasAudio ? '播' : '无'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                    <div class="explanation-box">${explanationHtml}</div>
+                                </div>
+                            `;
+                        });
+                    }
+
+                    html += `</section>`;
+                });
+            } else {
+                html += `<div class="quote-card"><h3>数据格式异常</h3><p>请检查 line.json 是否已迁移到新结构。</p></div>`;
+            }
+
+            html += `<div class="detail-footer">Generated by DeepSeek V3.2</div>`;
+            contentAreaEl.innerHTML = html;
+            document.querySelector('main').scrollTop = 0;
+        }
+
+        let currentAudio = null;
+        function playAudio(url) {
+            if (!url) return;
+
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio.currentTime = 0;
+            }
+
+            const audio = new Audio(url);
+            audio.play().catch(e => {
+                console.error('播放失败:', e);
+                alert('播放失败：可能是无效的 URL 或浏览器限制。');
+            });
+            currentAudio = audio;
+        }
+
+        function initSidebarToggle() {
+            const isMobile = () => window.innerWidth < 769;
+
+            const syncToggle = () => {
+                if (isMobile()) {
+                    sidebarToggle.classList.remove('is-collapsed');
+                    sidebarToggle.innerText = sidebar.classList.contains('sidebar-expanded') ? '✕' : '☰';
+                } else {
+                    const collapsed = sidebar.classList.contains('is-collapsed');
+                    sidebarToggle.classList.toggle('is-collapsed', collapsed);
+                    sidebarToggle.innerText = collapsed ? '☰' : '◀';
+                }
+            };
+
+            sidebarToggle.addEventListener('click', () => {
+                if (isMobile()) {
+                    sidebar.classList.toggle('sidebar-expanded');
+                } else {
+                    sidebar.classList.toggle('is-collapsed');
+                }
+                syncToggle();
+            });
+
+            window.addEventListener('resize', () => {
+                if (!isMobile()) {
+                    sidebar.classList.remove('sidebar-expanded');
+                }
+                syncToggle();
+            });
+
+            syncToggle();
+        }
+
+        searchInput.addEventListener('input', (e) => {
+            const keyword = e.target.value.toLowerCase().trim();
+
+            if (!keyword) {
+                renderList(groupData(allData));
+                return;
+            }
+
+            const filtered = allData.filter(item =>
+                item.hero.toLowerCase().includes(keyword) ||
+                item.skin.toLowerCase().includes(keyword)
+            );
+
+            renderList(groupData(filtered), true);
+        });
+
+        function escapeHtml(text) {
+            if (text === undefined || text === null) return '';
+            return String(text)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#039;');
+        }
+    </script>
+</body>
+</html>

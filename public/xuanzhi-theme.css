@@ -1,0 +1,193 @@
+/* 宣纸主题 · show.html / CRUD.html 共用调色板与质感 */
+
+:root {
+    --paper-warm: #f3ead4;
+    --paper-mid: #ece1c2;
+    --paper-deep: #d8c79b;
+    --ink-deep: #2a241c;
+    --ink-mid: #4a4035;
+    --ink-soft: #6f6453;
+    --vermilion: #a8352a;
+    --vermilion-soft: rgba(168, 53, 42, 0.14);
+    --seal-line: rgba(120, 70, 40, 0.32);
+    --xuan-fiber: rgba(156, 124, 76, 0.18);
+
+    --bg-body: var(--paper-warm);
+    --bg-sidebar: rgba(232, 215, 173, 0.55);
+    --bg-card: rgba(255, 250, 234, 0.92);
+    --bg-soft: rgba(220, 200, 158, 0.34);
+    --text-main: var(--ink-deep);
+    --text-sec: var(--ink-soft);
+    --accent-color: var(--vermilion);
+    --accent-soft: var(--vermilion-soft);
+    --border-color: rgba(120, 88, 50, 0.28);
+    --hairline: rgba(120, 88, 50, 0.18);
+    --shadow: 0 14px 36px rgba(80, 56, 22, 0.12);
+    --selection-bg: rgba(168, 53, 42, 0.18);
+    --code-bg: rgba(238, 226, 196, 0.6);
+    --paper-noise:
+        radial-gradient(circle at 22% 18%, rgba(150, 110, 60, 0.08), transparent 35%),
+        radial-gradient(circle at 80% 12%, rgba(180, 130, 70, 0.06), transparent 32%),
+        radial-gradient(circle at 18% 92%, rgba(110, 70, 30, 0.07), transparent 40%),
+        radial-gradient(circle at 86% 84%, rgba(150, 100, 50, 0.05), transparent 35%);
+    --paper-gradient:
+        linear-gradient(178deg, rgba(255, 247, 224, 0.88), rgba(232, 215, 173, 0.92)),
+        var(--bg-body);
+}
+
+[data-theme="dark"] {
+    --paper-warm: #15110b;
+    --paper-mid: #1c1812;
+    --paper-deep: #2a2218;
+    --ink-deep: #ebe2cd;
+    --ink-mid: #c4b89d;
+    --ink-soft: #93886e;
+    --vermilion: #d6a36e;
+    --vermilion-soft: rgba(214, 163, 110, 0.18);
+    --seal-line: rgba(214, 163, 110, 0.36);
+    --xuan-fiber: rgba(214, 180, 124, 0.08);
+
+    --bg-body: var(--paper-warm);
+    --bg-sidebar: rgba(34, 28, 20, 0.78);
+    --bg-card: rgba(34, 28, 20, 0.92);
+    --bg-soft: rgba(58, 46, 32, 0.6);
+    --text-main: var(--ink-deep);
+    --text-sec: var(--ink-mid);
+    --accent-color: var(--vermilion);
+    --accent-soft: var(--vermilion-soft);
+    --border-color: rgba(214, 180, 124, 0.18);
+    --hairline: rgba(214, 180, 124, 0.12);
+    --shadow: 0 18px 48px rgba(0, 0, 0, 0.55);
+    --selection-bg: rgba(214, 163, 110, 0.18);
+    --code-bg: rgba(20, 14, 8, 0.75);
+    --paper-noise:
+        radial-gradient(circle at 18% 22%, rgba(214, 163, 110, 0.06), transparent 40%),
+        radial-gradient(circle at 78% 12%, rgba(180, 130, 70, 0.05), transparent 36%),
+        radial-gradient(circle at 22% 92%, rgba(120, 80, 30, 0.08), transparent 42%);
+    --paper-gradient:
+        linear-gradient(178deg, rgba(20, 16, 10, 0.96), rgba(12, 10, 8, 0.98)),
+        var(--bg-body);
+}
+
+html { color-scheme: light; }
+html[data-theme="dark"] { color-scheme: dark; }
+
+body {
+    background: var(--paper-noise), var(--paper-gradient) !important;
+    color: var(--text-main) !important;
+    font-family: "Source Han Serif SC", "Noto Serif SC", "Songti SC", "STSong", serif !important;
+}
+
+body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    z-index: 0;
+    background-image:
+        repeating-linear-gradient(
+            90deg,
+            transparent 0,
+            transparent 39px,
+            var(--xuan-fiber) 39px,
+            var(--xuan-fiber) 40px
+        ),
+        repeating-linear-gradient(
+            0deg,
+            transparent 0,
+            transparent 119px,
+            var(--xuan-fiber) 119px,
+            var(--xuan-fiber) 120px
+        );
+    opacity: 0.55;
+    mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] body::before {
+    mix-blend-mode: screen;
+    opacity: 0.18;
+}
+
+aside,
+.sidebar-container > aside {
+    background-color: var(--bg-sidebar) !important;
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+}
+
+.sidebar-header h1,
+.editor-container h2,
+.hero-title-area h2,
+.skill-title {
+    font-family: "KaiTi", "STKaiti", "Source Han Serif SC", serif !important;
+    letter-spacing: 0.04em;
+}
+
+::selection { background: var(--selection-bg); color: var(--text-main); }
+
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+    background: var(--seal-line);
+    border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover { background: var(--accent-color); }
+
+/* 浮动主题切换按钮 */
+.floating-controls {
+    position: fixed;
+    top: 18px;
+    right: 18px;
+    z-index: 10001;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.floating-controls .icon-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border-color);
+    background: var(--bg-card);
+    color: var(--text-main);
+    box-shadow: var(--shadow);
+    cursor: pointer;
+    font-family: "KaiTi", "STKaiti", serif;
+    letter-spacing: 0.16em;
+    font-size: 0.92rem;
+    transition: border-color 0.18s ease, color 0.18s ease;
+    text-decoration: none;
+}
+
+.floating-controls .icon-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.floating-controls .glyph {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 22px;
+    height: 22px;
+    border-radius: 6px;
+    background: var(--accent-color);
+    color: var(--paper-warm);
+    font-size: 0.82rem;
+}
+
+@media (max-width: 720px) {
+    .floating-controls {
+        top: 10px;
+        right: 10px;
+        gap: 6px;
+    }
+
+    .floating-controls .icon-btn {
+        padding: 7px 10px;
+        font-size: 0.82rem;
+    }
+}

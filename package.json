@@ -1,0 +1,19 @@
+{
+  "name": "sgs-quote-v3",
+  "version": "1.0.0",
+  "description": "三国杀台词鉴赏 Next 展示站",
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "marked": "^18.0.4",
+    "next": "^16.2.6",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6"
+  }
+}

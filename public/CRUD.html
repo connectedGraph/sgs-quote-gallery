@@ -1,0 +1,2149 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>三国杀台词 · 后台管理</title>
+    <link rel="stylesheet" href="CRUD-style.css">
+    <link rel="stylesheet" href="xuanzhi-theme.css">
+    <script>
+        (function () {
+            try {
+                var stored = localStorage.getItem("sgs-quote-theme");
+                var theme = stored === "dark" ? "dark" : "light";
+                document.documentElement.dataset.theme = theme;
+            } catch (_error) {
+                document.documentElement.dataset.theme = "light";
+            }
+        })();
+    </script>
+    <style>
+        /* 快速解析按钮样式 */
+        .btn-parse {
+            background: linear-gradient(135deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-parse:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.3);
+        }
+        
+        .title-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* 统一的小按钮样式 */
+        .small-btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            padding: 6px 12px;
+            border-radius: 16px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.8rem;
+            transition: all 0.3s ease;
+            height: 32px;
+            min-width: 80px;
+            justify-content: center;
+        }
+
+        .small-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            transform: translateY(-1px);
+        }
+
+        .small-btn.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        /* 开发者模式按钮特殊样式 */
+        .developer-toggle {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        .developer-toggle.active {
+            background: linear-gradient(135deg, #e74c3c, #c0392b);
+            color: white;
+            border-color: #c0392b;
+        }
+
+        /* 搜索选项区域 */
+        .search-options {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-body);
+            display: none;
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+        }
+
+        .search-options.active {
+            display: block;
+            max-height: 400px;
+        }
+
+        .search-option-group {
+            margin-bottom: 15px;
+        }
+
+        .search-option-group:last-child {
+            margin-bottom: 0;
+        }
+
+        .search-option-group h4 {
+            margin: 0 0 10px 0;
+            font-size: 0.9rem;
+            color: var(--text-sec);
+            font-weight: normal;
+        }
+
+        .option-checkboxes {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .checkbox-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            color: var(--text-main);
+            padding: 4px 8px;
+            border-radius: 4px;
+            transition: all 0.2s ease;
+        }
+
+        .checkbox-item:hover {
+            background: rgba(0,0,0,0.05);
+        }
+
+        .checkbox-item input[type="checkbox"] {
+            margin: 0;
+            width: 14px;
+            height: 14px;
+        }
+
+        /* 搜索统计栏 */
+        .search-stats {
+            padding: 8px 15px;
+            font-size: 0.85rem;
+            color: var(--text-sec);
+            border-bottom: 1px solid var(--border-color);
+            background: var(--bg-body);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .search-stats.hidden {
+            display: none;
+        }
+
+        .search-stats span {
+            font-weight: bold;
+            color: var(--accent-color);
+        }
+
+        /* 展开/收起按钮 */
+        .toggle-options-btn {
+            background: transparent;
+            border: none;
+            color: var(--text-sec);
+            cursor: pointer;
+            font-size: 0.8rem;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            padding: 2px 8px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+        }
+
+        .toggle-options-btn:hover {
+            color: var(--accent-color);
+            background: rgba(0,0,0,0.05);
+        }
+
+        .toggle-options-btn span:last-child {
+            font-size: 0.7rem;
+            transition: transform 0.3s ease;
+        }
+
+        .toggle-options-btn.active span:last-child {
+            transform: rotate(180deg);
+        }
+
+        /* 搜索结果高亮样式 */
+        .search-highlight {
+            background-color: rgba(255, 235, 59, 0.4);
+            border-radius: 2px;
+            padding: 0 2px;
+        }
+
+        .search-highlight.hero {
+            background-color: rgba(155, 89, 182, 0.3);
+        }
+
+        .search-highlight.skin {
+            background-color: rgba(52, 152, 219, 0.3);
+        }
+
+        .search-highlight.skill {
+            background-color: rgba(46, 204, 113, 0.3);
+        }
+
+        .search-highlight.quote {
+            background-color: rgba(241, 196, 15, 0.3);
+        }
+
+        /* 缺失音频图标 */
+        .no-audio-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 16px;
+            height: 16px;
+            margin-left: 5px;
+            background: #e74c3c;
+            color: white;
+            border-radius: 50%;
+            font-size: 10px;
+            opacity: 0.7;
+        }
+
+        .no-audio-icon::before {
+            content: "🔇";
+        }
+
+        /* 侧边栏底部按钮区域 */
+        .sidebar-btns {
+            display: flex;
+            flex-direction: row;
+            gap: 6px;
+            padding: 10px 15px;
+        }
+
+        .sidebar-btns > * {
+            flex: 1;
+            min-width: 0;
+        }
+
+        /* 主题切换按钮特殊样式 */
+        .theme-toggle-btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+        }
+
+        /* 前往展示页按钮特殊样式 */
+        .show-page-btn {
+            background: var(--bg-card);
+            color: var(--text-main);
+            border: 1px solid var(--border-color);
+            text-decoration: none !important;
+        }
+
+        .show-page-btn:hover {
+            text-decoration: none !important;
+        }
+
+        /* 智能解析覆盖选项 */
+        .smart-merge-options {
+            margin-top: 20px;
+            padding: 15px;
+            background: var(--bg-body);
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+        }
+
+        .merge-option-title {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .merge-option-title h4 {
+            margin: 0;
+            font-size: 1rem;
+            color: var(--text-main);
+        }
+
+        .merge-strategy-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .merge-strategy-btn {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-card);
+            color: var(--text-main);
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        .merge-strategy-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .merge-strategy-btn.active {
+            background: var(--accent-color);
+            color: white;
+            border-color: var(--accent-color);
+        }
+
+        .merge-details {
+            font-size: 0.8rem;
+            color: var(--text-sec);
+            line-height: 1.4;
+        }
+
+        .merge-details ul {
+            margin: 8px 0;
+            padding-left: 20px;
+        }
+
+        .merge-details li {
+            margin-bottom: 4px;
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <div class="sidebar-toggle" id="sidebarToggle">☰</div>
+    <div class="sidebar-container">
+        <aside id="sidebar">
+            <div class="sidebar-header">
+                <h1>台词编辑器</h1>
+                <button class="btn-primary" style="width:100%; justify-content:center; margin-bottom:10px;" onclick="createNew()">
+                    <span>➕</span> 新建皮肤
+                </button>
+                <input type="text" class="search-box" id="searchInput" placeholder="搜索武将或皮肤...">
+            </div>
+
+            <!-- 搜索统计和展开按钮 -->
+            <div class="search-stats hidden" id="searchStats">
+                <div>
+                    找到 <span id="searchCount">0</span> 个匹配项
+                </div>
+                <button class="toggle-options-btn" id="toggleOptionsBtn" onclick="toggleSearchOptions()">
+                    <span>选项</span>
+                    <span>▼</span>
+                </button>
+            </div>
+
+            <!-- 搜索选项 -->
+            <div class="search-options" id="searchOptions">
+                <div class="search-option-group">
+                    <h4>搜索范围（多选）</h4>
+                    <div class="option-checkboxes">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="searchHero" checked onchange="updateSearch()">
+                            武将名称
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="searchSkin" checked onchange="updateSearch()">
+                            皮肤名称
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="searchSkillName" checked onchange="updateSearch()">
+                            技能名称
+                        </label>
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="searchQuoteText" checked onchange="updateSearch()">
+                            台词文本
+                        </label>
+                    </div>
+                </div>
+
+                <div class="search-option-group">
+                    <h4>特殊筛选</h4>
+                    <div class="option-checkboxes">
+                        <label class="checkbox-item">
+                            <input type="checkbox" id="showMissingAudio" onchange="updateSearch()">
+                            显示缺少音频的皮肤
+                        </label>
+                    </div>
+                </div>
+
+                <div class="search-option-group">
+                    <div style="display: flex; justify-content: space-between; align-items: center;">
+                        <h4>搜索提示</h4>
+                        <button class="toggle-options-btn" style="font-size: 0.75rem;" onclick="selectAllSearchOptions(true)">
+                            全选
+                        </button>
+                    </div>
+                    <div style="font-size: 0.8rem; color: var(--text-sec); line-height: 1.4;">
+                        可以同时搜索多个字段，勾选的字段越多，搜索结果越全面
+                    </div>
+                </div>
+            </div>
+
+            <div class="sidebar-list" id="sidebarList"></div>
+            
+            <div class="sidebar-footer">
+                <div class="sidebar-divider"></div>
+                <div class="sidebar-btns">
+                    <button class="small-btn developer-toggle" id="developerToggle" onclick="toggleDeveloperMode()">
+                        <span>开发者</span>
+                    </button>
+                    <a href="show.html" class="small-btn show-page-btn">
+                        <span>展示页</span>
+                    </a>
+                    <a href="/" class="small-btn show-page-btn">
+                        <span>Next 首页</span>
+                    </a>
+                </div>
+            </div>
+        </aside>
+    </div>
+
+    <main>
+        <div id="editorArea" class="content-container" style="display:none;">
+            <div class="editor-container">
+                <div class="toolbar">
+                    <div class="title-container">
+                        <h2 id="formTitle">正在编辑</h2>
+                        <button class="btn-parse" onclick="openHtmlParseModal()" title="从HTML片段快速导入">
+                            <span>⚡</span> 快速解析
+                        </button>
+                    </div>
+                    <button class="btn-danger" id="deleteBtn" onclick="deleteCurrent()">🗑️ 删除此皮肤</button>
+                </div>
+
+                <form id="dataForm" onsubmit="return false;">
+                    <div class="header-inputs">
+                        <div class="form-group">
+                            <label>武将名称 (Hero)</label>
+                            <input type="text" id="heroInput" placeholder="例如：徐妏" required>
+                        </div>
+                        <div class="form-group">
+                            <label>皮肤名称 (Skin)</label>
+                            <input type="text" id="skinInput" placeholder="例如：经典形象" required>
+                        </div>
+                    </div>
+
+                    <hr style="border:0; border-top:1px dashed var(--border-color); margin: 30px 0;">
+
+                    <div id="skillsContainer"></div>
+
+                    <button type="button" class="btn-add-block" onclick="addSkillHTML()">
+                        + 添加技能组 (Skill)
+                    </button>
+                </form>
+
+                <div class="action-bar">
+                    <span id="statusText" style="margin-right:auto; color:var(--text-sec); display:flex; align-items:center;"></span>
+                    <button class="btn-secondary" onclick="resetForm()">重置更改</button>
+                    <button class="btn-primary" onclick="saveData()">💾 保存所有更改</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="welcomeState" class="content-container" style="text-align: center; margin-top: 80px;">
+            <p style="color:var(--accent-color); letter-spacing:0.32em; font-size:0.78rem; margin:0 0 12px;">SGS QUOTE · ADMIN</p>
+            <h2 style="font-family:'KaiTi','STKaiti',serif; font-size:2.4rem; letter-spacing:0.08em; margin:0 0 16px;">编辑台</h2>
+            <p style="color:var(--text-sec); max-width:420px; margin:0 auto 12px; line-height:1.9;">
+                左侧选择已有皮肤进行编辑，或点击「新建皮肤」从空白开始。
+            </p>
+            <p style="color:var(--text-sec); max-width:420px; margin:0 auto; line-height:1.9; font-size:0.92rem;">
+                所有改动会原子写入 <code style="padding:1px 6px;border-radius:4px;background:var(--bg-soft);">db/line.json</code>。
+            </p>
+        </div>
+    </main>
+
+    <!-- HTML智能解析模态框 -->
+    <div id="htmlParseModal" class="modal-overlay" style="display: none;">
+        <div class="modal-content" style="max-width: 900px;">
+            <div class="modal-header">
+                <h3>🤖 HTML智能解析</h3>
+                <button class="modal-close" onclick="closeHtmlParseModal()">×</button>
+            </div>
+            
+            <div class="modal-body">
+                <div class="form-group">
+                    <label>从网站复制的HTML片段</label>
+                    <textarea 
+                        id="htmlInput" 
+                        class="html-textarea" 
+                        placeholder="粘贴从三国杀Wiki等网站复制的HTML片段..."
+                        rows="6"
+                    ></textarea>
+                    <div class="form-hint">
+                        提示：通常包含 &lt;div class="flex-container"&gt; 等结构
+                    </div>
+                </div>
+                
+                <div class="smart-merge-options">
+                    <div class="merge-option-title">
+                        <h4>智能合并选项</h4>
+                        <button class="toggle-options-btn" onclick="toggleMergeDetails()">
+                            <span>详情</span>
+                            <span>▼</span>
+                        </button>
+                    </div>
+                    
+                    <div class="merge-strategy-buttons">
+                        <button class="merge-strategy-btn active" onclick="selectMergeStrategy('smart')" id="mergeSmartBtn">
+                            智能合并
+                        </button>
+                        <button class="merge-strategy-btn" onclick="selectMergeStrategy('merge')" id="mergeMergeBtn">
+                            合并（保留已有）
+                        </button>
+                        <button class="merge-strategy-btn" onclick="selectMergeStrategy('replace')" id="mergeReplaceBtn">
+                            全部替换
+                        </button>
+                    </div>
+                    
+                    <div class="merge-details" id="mergeDetails" style="display: none;">
+                        <p><strong>智能合并策略：</strong></p>
+                        <ul>
+                            <li>📝 <strong>武将/皮肤名</strong>：仅当表单中为空时填充</li>
+                            <li>🎯 <strong>技能匹配</strong>：按名称智能匹配，避免重复创建</li>
+                            <li>💬 <strong>台词文本</strong>：合并台词，避免重复</li>
+                            <li>🔊 <strong>音频链接</strong>：仅添加表单中没有的音频</li>
+                            <li>📝 <strong>解析文本</strong>：保留现有解析，不覆盖</li>
+                        </ul>
+                        <p><strong>合并策略：</strong>仅添加新内容，不删除或修改现有数据</p>
+                        <p><strong>全部替换：</strong>清空表单并完全使用解析数据（谨慎使用）</p>
+                    </div>
+                </div>
+                
+                <div class="preview-section">
+                    <h4>解析预览</h4>
+                    <div id="parsePreview" class="preview-container">
+                        <div class="preview-placeholder">
+                            解析结果将显示在这里...
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="stats-bar" id="parseStats" style="display: none;">
+                    <span>🎯 匹配到 <strong id="skillsCount">0</strong> 个技能</span>
+                    <span>💬 共 <strong id="quotesCount">0</strong> 句台词</span>
+                    <span>🎵 <strong id="audioCount">0</span> 个音频链接</span>
+                </div>
+                
+                <div class="stats-bar" id="mergeStats" style="display: none; margin-top: 10px; background: var(--bg-body);">
+                    <span>🔄 智能合并：<strong id="newSkillsCount">0</strong> 个新技能</span>
+                    <span>➕ <strong id="newQuotesCount">0</strong> 句新台词</span>
+                    <span>🔊 <strong id="newAudioCount">0</span> 个新音频</span>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-secondary" onclick="testParse()">测试解析</button>
+                <button class="btn-secondary" onclick="clearHtmlInput()">清空</button>
+                <button class="btn-primary" onclick="applySmartParsedData()" id="applyBtn" disabled>智能应用到表单</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">保存成功</div>
+
+    <script>
+        // ============================================
+        // 全局状态与配置
+        // ============================================
+        const API_BASE_URL = '/api';
+        let allData = [];
+        let currentEditId = null;
+        let parsedData = null;
+        let isDeveloperMode = false;
+        let searchResults = [];
+        let isSearchOptionsExpanded = false;
+        let currentMergeStrategy = 'smart'; // smart, merge, replace
+
+        // DOM 元素
+        const sidebarListEl = document.getElementById('sidebarList');
+        const editorArea = document.getElementById('editorArea');
+        const welcomeState = document.getElementById('welcomeState');
+        const searchInput = document.getElementById('searchInput');
+        const skillsContainer = document.getElementById('skillsContainer');
+        const heroInput = document.getElementById('heroInput');
+        const skinInput = document.getElementById('skinInput');
+        const formTitle = document.getElementById('formTitle');
+        const deleteBtn = document.getElementById('deleteBtn');
+        const developerToggle = document.getElementById('developerToggle');
+        const searchOptions = document.getElementById('searchOptions');
+        const searchStats = document.getElementById('searchStats');
+        const searchCount = document.getElementById('searchCount');
+        const toggleOptionsBtn = document.getElementById('toggleOptionsBtn');
+
+        // 搜索选项元素
+        const searchHero = document.getElementById('searchHero');
+        const searchSkin = document.getElementById('searchSkin');
+        const searchSkillName = document.getElementById('searchSkillName');
+        const searchQuoteText = document.getElementById('searchQuoteText');
+        const showMissingAudio = document.getElementById('showMissingAudio');
+
+        // ============================================
+        // 初始化
+        // ============================================
+        initSidebarToggle();
+        initModalEvents();
+        initSearchOptions();
+        refreshList();
+
+        // ============================================
+        // 开发者模式功能
+        // ============================================
+        function toggleDeveloperMode() {
+            isDeveloperMode = !isDeveloperMode;
+            
+            if (isDeveloperMode) {
+                developerToggle.classList.add('active');
+                developerToggle.innerHTML = '<span>👨‍💻</span> 开发者';
+                searchStats.classList.remove('hidden');
+                
+                // 如果已有搜索词，立即应用搜索
+                if (searchInput.value.trim() || showMissingAudio.checked) {
+                    performSearch();
+                } else {
+                    updateSearchStats();
+                }
+            } else {
+                developerToggle.classList.remove('active');
+                developerToggle.innerHTML = '<span>👨‍💻</span> 开发者';
+                searchStats.classList.add('hidden');
+                searchOptions.classList.remove('active');
+                isSearchOptionsExpanded = false;
+                toggleOptionsBtn.classList.remove('active');
+                toggleOptionsBtn.innerHTML = '<span>选项</span><span>▼</span>';
+                
+                // 恢复原始列表
+                renderList(groupData(allData));
+            }
+        }
+
+        // 切换搜索选项的展开/收起
+        function toggleSearchOptions() {
+            if (!isDeveloperMode) return;
+            
+            isSearchOptionsExpanded = !isSearchOptionsExpanded;
+            
+            if (isSearchOptionsExpanded) {
+                searchOptions.classList.add('active');
+                toggleOptionsBtn.classList.add('active');
+                toggleOptionsBtn.innerHTML = '<span>选项</span><span>▲</span>';
+            } else {
+                searchOptions.classList.remove('active');
+                toggleOptionsBtn.classList.remove('active');
+                toggleOptionsBtn.innerHTML = '<span>选项</span><span>▼</span>';
+            }
+        }
+
+        // 初始化搜索选项
+        function initSearchOptions() {
+            // 设置默认值 - 默认全选
+            searchHero.checked = true;
+            searchSkin.checked = true;
+            searchSkillName.checked = true;
+            searchQuoteText.checked = true;
+            showMissingAudio.checked = false;
+        }
+
+        // 全选/取消全选搜索选项
+        function selectAllSearchOptions(selectAll) {
+            searchHero.checked = selectAll;
+            searchSkin.checked = selectAll;
+            searchSkillName.checked = selectAll;
+            searchQuoteText.checked = selectAll;
+            updateSearch();
+        }
+
+        // 执行搜索
+        function performSearch() {
+            const keyword = searchInput.value.toLowerCase().trim();
+            
+            // 获取选中的搜索字段
+            const searchFields = {
+                hero: searchHero.checked,
+                skin: searchSkin.checked,
+                skillName: searchSkillName.checked,
+                quoteText: searchQuoteText.checked
+            };
+            
+            // 如果没有选中任何搜索字段，使用默认值
+            const hasSelectedFields = searchFields.hero || searchFields.skin || 
+                                     searchFields.skillName || searchFields.quoteText;
+            
+            if (!hasSelectedFields) {
+                searchFields.hero = true;
+                searchFields.skin = true;
+                searchHero.checked = true;
+                searchSkin.checked = true;
+            }
+            
+            const showMissingAudioOnly = showMissingAudio.checked;
+            
+            searchResults = [];
+            
+            allData.forEach(item => {
+                let matches = [];
+                let hasMissingAudio = false;
+                
+                // 检查是否缺少音频
+                if (showMissingAudioOnly) {
+                    hasMissingAudio = hasMissingAudioInItem(item);
+                }
+                
+                // 如果没有搜索词但勾选了显示缺少音频，直接添加
+                if (!keyword && showMissingAudioOnly && hasMissingAudio) {
+                    searchResults.push({
+                        item: item,
+                        matches: [],
+                        hasMissingAudio: true,
+                        matchedFields: []
+                    });
+                    return;
+                }
+                
+                // 如果有搜索词，进行搜索
+                if (keyword) {
+                    const matchedFields = [];
+                    
+                    // 搜索武将名称
+                    if (searchFields.hero && item.hero.toLowerCase().includes(keyword)) {
+                        matches.push({
+                            type: 'hero',
+                            field: 'hero',
+                            value: item.hero
+                        });
+                        matchedFields.push('hero');
+                    }
+                    
+                    // 搜索皮肤名称
+                    if (searchFields.skin && item.skin.toLowerCase().includes(keyword)) {
+                        matches.push({
+                            type: 'skin',
+                            field: 'skin',
+                            value: item.skin
+                        });
+                        matchedFields.push('skin');
+                    }
+                    
+                    // 搜索技能名称和台词文本
+                    if (item.skills && (searchFields.skillName || searchFields.quoteText)) {
+                        item.skills.forEach(skill => {
+                            // 搜索技能名称
+                            if (searchFields.skillName && skill.name.toLowerCase().includes(keyword)) {
+                                matches.push({
+                                    type: 'skill',
+                                    field: 'skill.name',
+                                    value: skill.name,
+                                    skillName: skill.name
+                                });
+                                matchedFields.push('skill');
+                            }
+                            
+                            // 搜索台词文本
+                            if (searchFields.quoteText && skill.quotes) {
+                                skill.quotes.forEach((quote, quoteIndex) => {
+                                    if (quote.text.toLowerCase().includes(keyword)) {
+                                        matches.push({
+                                            type: 'quote',
+                                            field: 'quote.text',
+                                            value: quote.text,
+                                            skillName: skill.name,
+                                            quoteIndex: quoteIndex
+                                        });
+                                        matchedFields.push('quote');
+                                    }
+                                });
+                            }
+                        });
+                    }
+                    
+                    // 如果找到匹配项或需要显示缺少音频的项
+                    if (matches.length > 0 || (showMissingAudioOnly && hasMissingAudio)) {
+                        searchResults.push({
+                            item: item,
+                            matches: matches,
+                            hasMissingAudio: hasMissingAudio,
+                            matchedFields: [...new Set(matchedFields)] // 去重
+                        });
+                    }
+                }
+            });
+            
+            // 更新搜索统计
+            updateSearchStats();
+            
+            // 渲染搜索结果
+            renderSearchResults();
+        }
+
+        // 检查项目是否缺少音频
+        function hasMissingAudioInItem(item) {
+            if (!item.skills || item.skills.length === 0) return false;
+            
+            for (const skill of item.skills) {
+                if (!skill.quotes || skill.quotes.length === 0) continue;
+                
+                for (const quote of skill.quotes) {
+                    if (!quote.audio || quote.audio.trim() === '') {
+                        return true;
+                    }
+                }
+            }
+            
+            return false;
+        }
+
+        // 更新搜索统计
+        function updateSearchStats() {
+            const keyword = searchInput.value.trim();
+            const showMissingAudioOnly = showMissingAudio.checked;
+            
+            let statsText = '';
+            
+            if (!isDeveloperMode) {
+                searchStats.classList.add('hidden');
+                return;
+            }
+            
+            if (keyword) {
+                statsText = `找到 <span>${searchResults.length}</span> 个匹配项`;
+                searchCount.textContent = searchResults.length;
+            } else if (showMissingAudioOnly) {
+                statsText = `显示 <span>${searchResults.length}</span> 个缺少音频的皮肤`;
+                searchCount.textContent = searchResults.length;
+            } else {
+                statsText = `显示 <span>${allData.length}</span> 个皮肤`;
+                searchCount.textContent = allData.length;
+            }
+            
+            searchStats.innerHTML = `<div>${statsText}</div>`;
+            // 重新添加按钮，因为innerHTML会覆盖
+            const buttonHTML = `<button class="toggle-options-btn ${isSearchOptionsExpanded ? 'active' : ''}" id="toggleOptionsBtn" onclick="toggleSearchOptions()">
+                <span>选项</span>
+                <span>${isSearchOptionsExpanded ? '▲' : '▼'}</span>
+            </button>`;
+            searchStats.innerHTML += buttonHTML;
+        }
+
+        // 渲染搜索结果
+        function renderSearchResults() {
+            const groups = {};
+            
+            searchResults.forEach(result => {
+                const item = result.item;
+                if (!groups[item.hero]) groups[item.hero] = [];
+                groups[item.hero].push(result);
+            });
+            
+            sidebarListEl.innerHTML = '';
+            
+            for (const hero in groups) {
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'hero-group-title';
+                groupTitle.innerHTML = `<span>${escapeHtml(hero)}</span> <span>▼</span>`;
+                
+                const groupList = document.createElement('div');
+                groupList.className = 'hero-group-list expanded';
+                
+                groupTitle.addEventListener('click', () => {
+                    const isExpanded = groupList.classList.toggle('expanded');
+                    groupTitle.querySelector('span:last-child').innerText = isExpanded ? '▼' : '▶';
+                });
+
+                groups[hero].forEach(result => {
+                    const item = result.item;
+                    const navItem = document.createElement('div');
+                    navItem.className = 'nav-item';
+                    
+                    // 添加皮肤名（如果需要，添加缺少音频图标）
+                    let skinText = escapeHtml(item.skin);
+                    if (result.hasMissingAudio) {
+                        skinText += '<span class="no-audio-icon" title="缺少音频链接"></span>';
+                    }
+                    
+                    // 如果有匹配项，高亮显示
+                    if (result.matches.length > 0) {
+                        const skinMatches = result.matches.filter(m => m.type === 'skin');
+                        if (skinMatches.length > 0) {
+                            skinText = highlightText(item.skin, skinMatches[0].value, 'skin');
+                        }
+                    }
+                    
+                    navItem.innerHTML = skinText;
+                    
+                    // 添加点击事件
+                    navItem.addEventListener('click', (e) => {
+                        // 如果点击的是缺少音频图标，不触发加载详情
+                        if (!e.target.classList.contains('no-audio-icon')) {
+                            loadDetailWithHighlight(item.hero, item.skin, result.matches);
+                        }
+                    });
+                    
+                    groupList.appendChild(navItem);
+                });
+
+                sidebarListEl.appendChild(groupTitle);
+                sidebarListEl.appendChild(groupList);
+            }
+        }
+
+        // 高亮文本（带类型）
+        function highlightText(text, keyword, type = '') {
+            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+            const className = type ? `search-highlight ${type}` : 'search-highlight';
+            return escapeHtml(text).replace(regex, `<span class="${className}">$1</span>`);
+        }
+
+        // 转义正则表达式特殊字符
+        function escapeRegex(text) {
+            return text.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        }
+
+        // 加载详情并高亮匹配项
+        async function loadDetailWithHighlight(hero, skin, matches) {
+            await loadDetail(hero, skin);
+            
+            // 高亮匹配项
+            setTimeout(() => {
+                highlightMatches(matches);
+            }, 100);
+        }
+
+        // 高亮编辑器中的匹配项
+        function highlightMatches(matches) {
+            // 清空之前的高亮
+            document.querySelectorAll('.search-highlight').forEach(el => {
+                const parent = el.parentNode;
+                parent.replaceChild(document.createTextNode(el.textContent), el);
+                parent.normalize();
+            });
+            
+            // 应用新的高亮
+            matches.forEach(match => {
+                switch (match.type) {
+                    case 'hero':
+                        const heroInput = document.getElementById('heroInput');
+                        highlightInputText(heroInput, match.value, 'hero');
+                        break;
+                    case 'skin':
+                        const skinInput = document.getElementById('skinInput');
+                        highlightInputText(skinInput, match.value, 'skin');
+                        break;
+                    case 'skill':
+                        highlightSkillName(match.skillName, match.value);
+                        break;
+                    case 'quote':
+                        highlightQuoteText(match.skillName, match.quoteIndex, match.value);
+                        break;
+                }
+            });
+            
+            // 如果有匹配项，滚动到第一个高亮位置
+            if (matches.length > 0) {
+                const firstHighlight = document.querySelector('.search-highlight');
+                if (firstHighlight) {
+                    firstHighlight.scrollIntoView({ 
+                        behavior: 'smooth', 
+                        block: 'center',
+                        inline: 'center'
+                    });
+                }
+            }
+        }
+
+        // 高亮输入框文本（带类型）
+        function highlightInputText(inputElement, keyword, type = '') {
+            const text = inputElement.value;
+            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+            const className = type ? `search-highlight ${type}` : 'search-highlight';
+            const highlighted = text.replace(regex, `<span class="${className}">$1</span>`);
+            
+            // 创建临时元素来插入HTML
+            const temp = document.createElement('div');
+            temp.innerHTML = `<span>${highlighted}</span>`;
+            
+            // 替换输入框
+            const span = document.createElement('span');
+            span.style.cssText = window.getComputedStyle(inputElement).cssText;
+            span.style.display = 'inline-block';
+            span.style.width = inputElement.offsetWidth + 'px';
+            span.style.height = inputElement.offsetHeight + 'px';
+            span.style.padding = '12px';
+            span.style.border = '1px solid var(--border-color)';
+            span.style.borderRadius = '8px';
+            span.style.backgroundColor = 'var(--bg-body)';
+            span.innerHTML = temp.innerHTML;
+            
+            inputElement.parentNode.insertBefore(span, inputElement);
+            inputElement.style.display = 'none';
+            
+            // 3秒后恢复
+            setTimeout(() => {
+                inputElement.style.display = 'block';
+                span.parentNode.removeChild(span);
+            }, 3000);
+        }
+
+        // 高亮技能名
+        function highlightSkillName(skillName, keyword) {
+            const skillInputs = document.querySelectorAll('.skill-name-input');
+            skillInputs.forEach(input => {
+                if (input.value === skillName) {
+                    const text = input.value;
+                    const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                    const highlighted = text.replace(regex, '<span class="search-highlight skill">$1</span>');
+                    
+                    const span = document.createElement('span');
+                    span.style.cssText = window.getComputedStyle(input).cssText;
+                    span.style.display = 'inline-block';
+                    span.style.width = input.offsetWidth + 'px';
+                    span.style.height = input.offsetHeight + 'px';
+                    span.style.padding = '12px';
+                    span.style.border = '1px solid var(--border-color)';
+                    span.style.borderRadius = '8px';
+                    span.style.backgroundColor = 'var(--bg-body)';
+                    span.innerHTML = highlighted;
+                    
+                    input.parentNode.insertBefore(span, input);
+                    input.style.display = 'none';
+                    
+                    setTimeout(() => {
+                        input.style.display = 'block';
+                        span.parentNode.removeChild(span);
+                    }, 3000);
+                }
+            });
+        }
+
+        // 高亮台词文本
+        function highlightQuoteText(skillName, quoteIndex, keyword) {
+            const skillItems = document.querySelectorAll('.skill-editor-item');
+            skillItems.forEach(skillItem => {
+                const skillInput = skillItem.querySelector('.skill-name-input');
+                if (skillInput && skillInput.value === skillName) {
+                    const quoteItems = skillItem.querySelectorAll('.quote-editor-item');
+                    if (quoteItems[quoteIndex]) {
+                        const quoteInput = quoteItems[quoteIndex].querySelector('.q-text');
+                        if (quoteInput) {
+                            const text = quoteInput.value;
+                            const regex = new RegExp(`(${escapeRegex(keyword)})`, 'gi');
+                            const highlighted = text.replace(regex, '<span class="search-highlight quote">$1</span>');
+                            
+                            const span = document.createElement('span');
+                            span.style.cssText = window.getComputedStyle(quoteInput).cssText;
+                            span.style.display = 'inline-block';
+                            span.style.width = quoteInput.offsetWidth + 'px';
+                            span.style.height = quoteInput.offsetHeight + 'px';
+                            span.style.padding = '12px';
+                            span.style.border = '1px solid var(--border-color)';
+                            span.style.borderRadius = '8px';
+                            span.style.backgroundColor = 'var(--bg-body)';
+                            span.innerHTML = highlighted;
+                            
+                            quoteInput.parentNode.insertBefore(span, quoteInput);
+                            quoteInput.style.display = 'none';
+                            
+                            // 滚动到高亮位置
+                            span.scrollIntoView({ 
+                                behavior: 'smooth', 
+                                block: 'center'
+                            });
+                            
+                            setTimeout(() => {
+                                quoteInput.style.display = 'block';
+                                span.parentNode.removeChild(span);
+                            }, 3000);
+                        }
+                    }
+                }
+            });
+        }
+
+        // 更新搜索（防抖处理）
+        let searchTimeout;
+        function updateSearch() {
+            if (!isDeveloperMode) return;
+            
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                performSearch();
+            }, 300);
+        }
+
+        // 搜索输入事件
+        searchInput.addEventListener('input', updateSearch);
+
+        // ============================================
+        // HTML智能解析功能
+        // ============================================
+        
+        // 初始化模态框事件
+        function initModalEvents() {
+            const modal = document.getElementById('htmlParseModal');
+            if (modal) {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeHtmlParseModal();
+                    }
+                });
+            }
+            
+            // 添加快捷键支持
+            document.addEventListener('keydown', function(e) {
+                const modal = document.getElementById('htmlParseModal');
+                if (modal && modal.style.display === 'flex') {
+                    if (e.key === 'Escape') {
+                        closeHtmlParseModal();
+                    } else if (e.ctrlKey && e.key === 'Enter') {
+                        if (!e.target.matches('textarea')) {
+                            applySmartParsedData();
+                        }
+                    }
+                }
+            });
+        }
+
+        // 打开解析模态框
+        function openHtmlParseModal() {
+            const modal = document.getElementById('htmlParseModal');
+            modal.style.display = 'flex';
+            document.getElementById('htmlInput').focus();
+            
+            // 重置合并统计
+            document.getElementById('mergeStats').style.display = 'none';
+            
+            // 自动填充当前表单中的英雄和皮肤名
+            const currentHero = document.getElementById('heroInput').value;
+            const currentSkin = document.getElementById('skinInput').value;
+            
+            if (currentHero || currentSkin) {
+                console.log('当前编辑：', currentHero, currentSkin);
+            }
+        }
+
+        // 关闭模态框
+        function closeHtmlParseModal() {
+            const modal = document.getElementById('htmlParseModal');
+            modal.style.display = 'none';
+            parsedData = null;
+        }
+
+        // 切换合并详情显示
+        function toggleMergeDetails() {
+            const details = document.getElementById('mergeDetails');
+            const btn = document.querySelector('.smart-merge-options .toggle-options-btn span:last-child');
+            if (details.style.display === 'none') {
+                details.style.display = 'block';
+                btn.textContent = '▲';
+            } else {
+                details.style.display = 'none';
+                btn.textContent = '▼';
+            }
+        }
+
+        // 选择合并策略
+        function selectMergeStrategy(strategy) {
+            currentMergeStrategy = strategy;
+            
+            // 更新按钮状态
+            document.getElementById('mergeSmartBtn').classList.remove('active');
+            document.getElementById('mergeMergeBtn').classList.remove('active');
+            document.getElementById('mergeReplaceBtn').classList.remove('active');
+            
+            document.getElementById(`merge${strategy.charAt(0).toUpperCase() + strategy.slice(1)}Btn`).classList.add('active');
+            
+            // 更新应用按钮文本
+            const applyBtn = document.getElementById('applyBtn');
+            if (strategy === 'replace') {
+                applyBtn.textContent = '全部替换表单';
+            } else if (strategy === 'merge') {
+                applyBtn.textContent = '合并到表单';
+            } else {
+                applyBtn.textContent = '智能应用到表单';
+            }
+            
+            // 如果有解析数据，重新计算合并统计
+            if (parsedData) {
+                calculateMergeStats();
+            }
+        }
+
+        // 清空输入框
+        function clearHtmlInput() {
+            document.getElementById('htmlInput').value = '';
+            document.getElementById('parsePreview').innerHTML = `
+                <div class="preview-placeholder">
+                    解析结果将显示在这里...
+                </div>
+            `;
+            document.getElementById('parseStats').style.display = 'none';
+            document.getElementById('mergeStats').style.display = 'none';
+            document.getElementById('applyBtn').disabled = true;
+            parsedData = null;
+        }
+
+        // 测试解析功能
+        async function testParse() {
+            const htmlInput = document.getElementById('htmlInput');
+            const html = htmlInput.value.trim();
+            
+            if (!html) {
+                showToast('请先粘贴HTML片段', true);
+                return;
+            }
+            
+            const preview = document.getElementById('parsePreview');
+            const stats = document.getElementById('parseStats');
+            const applyBtn = document.getElementById('applyBtn');
+            
+            // 显示加载状态
+            preview.innerHTML = `
+                <div style="text-align:center; padding:40px;">
+                    <div style="animation: spin 1s linear infinite; font-size:2rem; margin-bottom:10px;">⟳</div>
+                    <div>正在解析HTML片段...</div>
+                </div>
+            `;
+            
+            try {
+                const response = await fetch(`${API_BASE_URL}/parse-html`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        html: html,
+                        hero: document.getElementById('heroInput').value || undefined,
+                        skin: document.getElementById('skinInput').value || undefined
+                    })
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    parsedData = result.data;
+                    
+                    // 更新预览
+                    preview.innerHTML = '';
+                    result.data.skills.forEach(skill => {
+                        const skillCard = document.createElement('div');
+                        skillCard.className = 'preview-card';
+                        
+                        skillCard.innerHTML = `
+                            <div class="preview-card-header">
+                                <div class="preview-skill-name">${escapeHtml(skill.name)}</div>
+                                <div class="preview-quote-count">${skill.quotes.length} 句台词</div>
+                            </div>
+                            ${skill.quotes.map(quote => `
+                                <div class="preview-quote-item">
+                                    <div class="preview-quote-text">${escapeHtml(quote.text)}</div>
+                                    ${quote.audio ? `<div class="preview-audio-url">${escapeHtml(quote.audio.substring(0, 60))}...</div>` : ''}
+                                </div>
+                            `).join('')}
+                        `;
+                        
+                        preview.appendChild(skillCard);
+                    });
+                    
+                    // 更新统计信息
+                    document.getElementById('skillsCount').textContent = result.stats.skillsCount;
+                    document.getElementById('quotesCount').textContent = result.stats.totalQuotes;
+                    
+                    const audioCount = result.data.skills.reduce((sum, skill) => 
+                        sum + skill.quotes.filter(q => q.audio).length, 0
+                    );
+                    document.getElementById('audioCount').textContent = audioCount;
+                    
+                    stats.style.display = 'flex';
+                    applyBtn.disabled = false;
+                    
+                    // 计算合并统计
+                    calculateMergeStats();
+                    
+                    showToast(`解析成功！找到 ${result.stats.skillsCount} 个技能，${result.stats.totalQuotes} 句台词`);
+                } else {
+                    preview.innerHTML = `
+                        <div style="text-align:center; padding:30px; color:#e74c3c;">
+                            <div style="font-size:3rem; margin-bottom:10px;">❌</div>
+                            <div>${escapeHtml(result.message)}</div>
+                        </div>
+                    `;
+                    stats.style.display = 'none';
+                    document.getElementById('mergeStats').style.display = 'none';
+                    applyBtn.disabled = true;
+                    parsedData = null;
+                }
+            } catch (error) {
+                preview.innerHTML = `
+                    <div style="text-align:center; padding:30px; color:#e74c3c;">
+                        <div style="font-size:3rem; margin-bottom:10px;">⚠️</div>
+                        <div>解析失败：${escapeHtml(error.message)}</div>
+                    </div>
+                `;
+                stats.style.display = 'none';
+                document.getElementById('mergeStats').style.display = 'none';
+                applyBtn.disabled = true;
+                parsedData = null;
+                showToast('解析失败：' + error.message, true);
+            }
+        }
+
+        // 计算合并统计
+        function calculateMergeStats() {
+            if (!parsedData) return;
+            
+            // 获取当前表单中的数据
+            const currentData = getCurrentFormData();
+            
+            let newSkillsCount = 0;
+            let newQuotesCount = 0;
+            let newAudioCount = 0;
+            
+            if (currentMergeStrategy === 'replace') {
+                // 全部替换模式
+                newSkillsCount = parsedData.skills.length;
+                newQuotesCount = parsedData.skills.reduce((sum, skill) => sum + skill.quotes.length, 0);
+                newAudioCount = parsedData.skills.reduce((sum, skill) => 
+                    sum + skill.quotes.filter(q => q.audio && q.audio.trim()).length, 0
+                );
+            } else {
+                // 智能合并或合并模式
+                
+                // 检查技能
+                parsedData.skills.forEach(parsedSkill => {
+                    const existingSkill = currentData.skills.find(s => s.name === parsedSkill.name);
+                    
+                    if (!existingSkill) {
+                        // 新技能
+                        newSkillsCount++;
+                        newQuotesCount += parsedSkill.quotes.length;
+                        newAudioCount += parsedSkill.quotes.filter(q => q.audio && q.audio.trim()).length;
+                    } else {
+                        // 现有技能，检查新台词
+                        parsedSkill.quotes.forEach(parsedQuote => {
+                            const existingQuote = existingSkill.quotes.find(q => q.text === parsedQuote.text);
+                            if (!existingQuote) {
+                                newQuotesCount++;
+                                if (parsedQuote.audio && parsedQuote.audio.trim()) {
+                                    newAudioCount++;
+                                }
+                            }
+                        });
+                    }
+                });
+            }
+            
+            // 更新合并统计
+            document.getElementById('newSkillsCount').textContent = newSkillsCount;
+            document.getElementById('newQuotesCount').textContent = newQuotesCount;
+            document.getElementById('newAudioCount').textContent = newAudioCount;
+            document.getElementById('mergeStats').style.display = 'flex';
+        }
+
+        // 获取当前表单数据
+        function getCurrentFormData() {
+            const formData = {
+                hero: heroInput.value.trim(),
+                skin: skinInput.value.trim(),
+                skills: []
+            };
+
+            // 遍历 DOM 收集技能和台词
+            document.querySelectorAll('.skill-editor-item').forEach(skillEl => {
+                const skillName = skillEl.querySelector('.skill-name-input').value.trim();
+                if(!skillName) return; // 跳过空名技能
+
+                const skillObj = {
+                    name: skillName,
+                    quotes: []
+                };
+
+                skillEl.querySelectorAll('.quote-editor-item').forEach(quoteEl => {
+                    skillObj.quotes.push({
+                        text: quoteEl.querySelector('.q-text').value.trim(),
+                        explanation: quoteEl.querySelector('.q-exp').value,
+                        audio: quoteEl.querySelector('.q-audio').value.trim()
+                    });
+                });
+
+                formData.skills.push(skillObj);
+            });
+
+            return formData;
+        }
+
+        // 智能应用解析结果到表单
+        function applySmartParsedData() {
+            if (!parsedData) {
+                showToast('没有可用的解析数据', true);
+                return;
+            }
+            
+            if (currentMergeStrategy === 'replace') {
+                // 全部替换模式
+                applyReplaceMode();
+            } else if (currentMergeStrategy === 'merge') {
+                // 合并模式（保留已有）
+                applyMergeMode();
+            } else {
+                // 智能合并模式（默认）
+                applySmartMergeMode();
+            }
+            
+            // 关闭模态框
+            closeHtmlParseModal();
+        }
+
+        // 全部替换模式
+        function applyReplaceMode() {
+            // 填充英雄和皮肤名（直接替换）
+            const heroInput = document.getElementById('heroInput');
+            const skinInput = document.getElementById('skinInput');
+            
+            if (parsedData.hero && parsedData.hero !== '未知英雄') {
+                heroInput.value = parsedData.hero;
+            }
+            
+            if (parsedData.skin && parsedData.skin !== '经典形象') {
+                skinInput.value = parsedData.skin;
+            }
+            
+            // 清空现有技能
+            const skillsContainer = document.getElementById('skillsContainer');
+            skillsContainer.innerHTML = '';
+            
+            // 添加解析出的技能
+            parsedData.skills.forEach(skill => {
+                const skillEl = addSkillHTML(skill.name);
+                const quotesContainer = skillEl.querySelector('.quotes-list');
+                
+                skill.quotes.forEach(quote => {
+                    addQuoteHTML(quotesContainer, {
+                        text: quote.text,
+                        explanation: quote.explanation || '',
+                        audio: quote.audio || ''
+                    });
+                });
+            });
+            
+            showToast(`已替换所有数据，添加了 ${parsedData.skills.length} 个技能`);
+        }
+
+        // 合并模式
+// 合并模式（保留已有）
+function applyMergeMode() {
+    // 填充英雄和皮肤名（仅当为空时）
+    const heroInput = document.getElementById('heroInput');
+    const skinInput = document.getElementById('skinInput');
+    
+    if (!heroInput.value && parsedData.hero && parsedData.hero !== '未知英雄') {
+        heroInput.value = parsedData.hero;
+    }
+    
+    if (!skinInput.value && parsedData.skin && parsedData.skin !== '经典形象') {
+        skinInput.value = parsedData.skin;
+    }
+    
+    let newSkillsCount = 0;
+    let newQuotesCount = 0;
+    let updatedAudioCount = 0;
+    let updatedExplanationCount = 0;
+    
+    console.log('开始合并模式...');
+    console.log('解析数据:', parsedData);
+    
+    // 获取所有现有技能和台词
+    const skillElements = document.querySelectorAll('.skill-editor-item');
+    console.log('现有技能数量:', skillElements.length);
+    
+    // 处理每个解析的技能
+    parsedData.skills.forEach((parsedSkill, skillIndex) => {
+        console.log(`\n处理解析技能 ${skillIndex + 1}: "${parsedSkill.name}"`);
+        console.log('该技能有台词:', parsedSkill.quotes.length);
+        
+        // 查找是否有相同名称的现有技能
+        let existingSkillEl = null;
+        skillElements.forEach(skillEl => {
+            const skillNameInput = skillEl.querySelector('.skill-name-input');
+            if (skillNameInput && skillNameInput.value.trim() === parsedSkill.name) {
+                existingSkillEl = skillEl;
+            }
+        });
+        
+        if (existingSkillEl) {
+            console.log('找到现有技能:', parsedSkill.name);
+            // 技能已存在，处理台词
+            
+            // 获取该技能的所有现有台词
+            const existingQuoteElements = existingSkillEl.querySelectorAll('.quote-editor-item');
+            console.log('现有台词数量:', existingQuoteElements.length);
+            
+            // 处理解析的每个台词
+            parsedSkill.quotes.forEach((parsedQuote, quoteIndex) => {
+                console.log(`\n处理台词 ${quoteIndex + 1}: "${parsedQuote.text}"`);
+                console.log('解析音频:', parsedQuote.audio || '(空)');
+                console.log('解析解析:', parsedQuote.explanation ? '有' : '空');
+                
+                // 查找是否有相同文本的现有台词
+                let existingQuoteEl = null;
+                existingQuoteElements.forEach(quoteEl => {
+                    const quoteTextInput = quoteEl.querySelector('.q-text');
+                    if (quoteTextInput && quoteTextInput.value.trim() === parsedQuote.text) {
+                        existingQuoteEl = quoteEl;
+                    }
+                });
+                
+                if (existingQuoteEl) {
+                    console.log('找到相同台词，检查音频和解析...');
+                    
+                    // 检查并更新音频
+                    const audioInput = existingQuoteEl.querySelector('.q-audio');
+                    if (audioInput) {
+                        const currentAudio = audioInput.value.trim();
+                        const newAudio = parsedQuote.audio ? parsedQuote.audio.trim() : '';
+                        
+                        console.log('当前音频:', currentAudio || '(空)');
+                        console.log('解析音频:', newAudio || '(空)');
+                        
+                        if (newAudio && !currentAudio) {
+                            console.log('✅ 填充空白音频');
+                            audioInput.value = newAudio;
+                            updatedAudioCount++;
+                        }
+                    }
+                    
+                    // 检查并更新解析
+                    const explanationTextarea = existingQuoteEl.querySelector('.q-exp');
+                    if (explanationTextarea) {
+                        const currentExplanation = explanationTextarea.value.trim();
+                        const newExplanation = parsedQuote.explanation ? parsedQuote.explanation.trim() : '';
+                        
+                        console.log('当前解析:', currentExplanation ? '有' : '空');
+                        console.log('解析解析:', newExplanation ? '有' : '空');
+                        
+                        if (newExplanation && !currentExplanation) {
+                            console.log('✅ 填充空白解析');
+                            explanationTextarea.value = newExplanation;
+                            updatedExplanationCount++;
+                        }
+                    }
+                } else {
+                    console.log('新台词，添加到技能中');
+                    // 新台词 - 添加到现有技能
+                    const quotesContainer = existingSkillEl.querySelector('.quotes-list');
+                    if (quotesContainer) {
+                        addQuoteHTML(quotesContainer, {
+                            text: parsedQuote.text,
+                            explanation: parsedQuote.explanation || '',
+                            audio: parsedQuote.audio || ''
+                        });
+                        newQuotesCount++;
+                        
+                        if (parsedQuote.audio && parsedQuote.audio.trim()) {
+                            updatedAudioCount++;
+                        }
+                        if (parsedQuote.explanation && parsedQuote.explanation.trim()) {
+                            updatedExplanationCount++;
+                        }
+                    }
+                }
+            });
+        } else {
+            console.log('新技能，完全添加');
+            // 新技能 - 完全添加
+            const skillEl = addSkillHTML(parsedSkill.name);
+            const quotesContainer = skillEl.querySelector('.quotes-list');
+            
+            parsedSkill.quotes.forEach(quote => {
+                addQuoteHTML(quotesContainer, {
+                    text: quote.text,
+                    explanation: quote.explanation || '',
+                    audio: quote.audio || ''
+                });
+            });
+            
+            newSkillsCount++;
+            newQuotesCount += parsedSkill.quotes.length;
+            
+            // 统计音频和解析
+            parsedSkill.quotes.forEach(quote => {
+                if (quote.audio && quote.audio.trim()) {
+                    updatedAudioCount++;
+                }
+                if (quote.explanation && quote.explanation.trim()) {
+                    updatedExplanationCount++;
+                }
+            });
+        }
+    });
+    
+    console.log('\n合并完成统计:');
+    console.log('新技能:', newSkillsCount);
+    console.log('新台词:', newQuotesCount);
+    console.log('更新音频:', updatedAudioCount);
+    console.log('更新解析:', updatedExplanationCount);
+    
+    // 显示结果
+    let statsText = `合并完成：`;
+    const stats = [];
+    if (newSkillsCount > 0) stats.push(`新增${newSkillsCount}个技能`);
+    if (newQuotesCount > 0) stats.push(`新增${newQuotesCount}句台词`);
+    if (updatedAudioCount > 0) stats.push(`更新${updatedAudioCount}个音频`);
+    if (updatedExplanationCount > 0) stats.push(`更新${updatedExplanationCount}条解析`);
+    
+    if (stats.length > 0) {
+        statsText += stats.join('，');
+    } else {
+        statsText += '没有新增或更新内容';
+    }
+    
+    showToast(statsText);
+}
+// 智能合并模式
+        function applySmartMergeMode() {
+            // 填充英雄和皮肤名（仅当为空时）
+            const heroInput = document.getElementById('heroInput');
+            const skinInput = document.getElementById('skinInput');
+            
+            if (!heroInput.value && parsedData.hero && parsedData.hero !== '未知英雄') {
+                heroInput.value = parsedData.hero;
+            }
+            
+            if (!skinInput.value && parsedData.skin && parsedData.skin !== '经典形象') {
+                skinInput.value = parsedData.skin;
+            }
+            
+            let newSkillsCount = 0;
+            let newQuotesCount = 0;
+            let newAudioCount = 0;
+            
+            // 获取现有技能
+            const existingSkills = {};
+            document.querySelectorAll('.skill-editor-item').forEach(skillEl => {
+                const skillName = skillEl.querySelector('.skill-name-input').value.trim();
+                if (skillName) {
+                    const quotes = [];
+                    skillEl.querySelectorAll('.quote-editor-item').forEach(quoteEl => {
+                        const quote = {
+                            text: quoteEl.querySelector('.q-text').value.trim(),
+                            explanation: quoteEl.querySelector('.q-exp').value,
+                            audio: quoteEl.querySelector('.q-audio').value.trim()
+                        };
+                        if (quote.text) {
+                            quotes.push(quote);
+                        }
+                    });
+                    existingSkills[skillName] = { element: skillEl, quotes };
+                }
+            });
+            
+            // 智能合并技能
+            parsedData.skills.forEach(parsedSkill => {
+                if (existingSkills[parsedSkill.name]) {
+                    // 技能已存在，智能合并台词
+                    const { element: skillEl, quotes: existingQuotes } = existingSkills[parsedSkill.name];
+                    const quotesContainer = skillEl.querySelector('.quotes-list');
+                    
+                    // 找出新台词
+                    const newQuotes = parsedSkill.quotes.filter(parsedQuote => {
+                        return !existingQuotes.some(existingQuote => existingQuote.text === parsedQuote.text);
+                    });
+                    
+                    // 智能添加新台词（不覆盖解析）
+                    newQuotes.forEach(parsedQuote => {
+                        addQuoteHTML(quotesContainer, {
+                            text: parsedQuote.text,
+                            explanation: '', // 不覆盖现有解析
+                            audio: parsedQuote.audio || ''
+                        });
+                        newQuotesCount++;
+                        if (parsedQuote.audio && parsedQuote.audio.trim()) {
+                            newAudioCount++;
+                        }
+                    });
+                } else {
+                    // 新技能
+                    const skillEl = addSkillHTML(parsedSkill.name);
+                    const quotesContainer = skillEl.querySelector('.quotes-list');
+                    
+                    // 只添加音频，不添加解析
+                    parsedSkill.quotes.forEach(quote => {
+                        addQuoteHTML(quotesContainer, {
+                            text: quote.text,
+                            explanation: '', // 不添加解析，让用户手动添加
+                            audio: quote.audio || ''
+                        });
+                    });
+                    
+                    newSkillsCount++;
+                    newQuotesCount += parsedSkill.quotes.length;
+                    newAudioCount += parsedSkill.quotes.filter(q => q.audio && q.audio.trim()).length;
+                }
+            });
+            
+            showToast(`智能合并完成：新增 ${newSkillsCount} 个技能，${newQuotesCount} 句台词，${newAudioCount} 个音频链接`);
+        }
+
+        // ============================================
+        // 核心逻辑：数据加载与侧边栏
+        // ============================================
+        async function refreshList() {
+            try {
+                const res = await fetch(`${API_BASE_URL}/quotes`);
+                allData = await res.json();
+                if (isDeveloperMode) {
+                    updateSearchStats();
+                    if (searchInput.value.trim() || showMissingAudio.checked) {
+                        performSearch();
+                    } else {
+                        renderList(groupData(allData));
+                    }
+                } else {
+                    renderList(groupData(allData));
+                }
+            } catch (e) {
+                showToast('加载列表失败', true);
+            }
+        }
+
+        function groupData(data) {
+            const groups = {};
+            data.forEach(item => {
+                if (!groups[item.hero]) groups[item.hero] = [];
+                groups[item.hero].push(item);
+            });
+            return groups;
+        }
+
+        function renderList(groups, defaultExpand = false) {
+            sidebarListEl.innerHTML = '';
+            for (const hero in groups) {
+                const groupTitle = document.createElement('div');
+                groupTitle.className = 'hero-group-title';
+                groupTitle.innerHTML = `<span>${hero}</span> <span>${defaultExpand ? '▼' : '▶'}</span>`;
+                
+                const groupList = document.createElement('div');
+                groupList.className = `hero-group-list ${defaultExpand ? 'expanded' : ''}`;
+                
+                groupTitle.addEventListener('click', () => {
+                    const isExpanded = groupList.classList.toggle('expanded');
+                    groupTitle.querySelector('span:last-child').innerText = isExpanded ? '▼' : '▶';
+                });
+
+                groups[hero].forEach(item => {
+                    const navItem = document.createElement('div');
+                    navItem.className = 'nav-item';
+                    navItem.innerText = item.skin;
+                    navItem.addEventListener('click', () => {
+                        if (isDeveloperMode && searchResults.length > 0) {
+                            // 在开发者模式下，找到对应的搜索结果
+                            const result = searchResults.find(r => 
+                                r.item.hero === item.hero && r.item.skin === item.skin
+                            );
+                            if (result) {
+                                loadDetailWithHighlight(item.hero, item.skin, result.matches);
+                            } else {
+                                loadDetail(item.hero, item.skin);
+                            }
+                        } else {
+                            loadDetail(item.hero, item.skin);
+                        }
+                    });
+                    groupList.appendChild(navItem);
+                });
+
+                sidebarListEl.appendChild(groupTitle);
+                sidebarListEl.appendChild(groupList);
+            }
+        }
+
+        // ============================================
+        // 核心逻辑：表单渲染与操作
+        // ============================================
+        
+        // 1. 进入新建模式
+        function createNew() {
+            currentEditId = null;
+            formTitle.innerText = "✨ 新建皮肤数据";
+            deleteBtn.style.display = 'none';
+            resetForm();
+            heroInput.value = '';
+            skinInput.value = '';
+            skillsContainer.innerHTML = '';
+            // 添加一个默认的空技能组
+            addSkillHTML();
+            
+            showEditor();
+        }
+
+        // 2. 加载详情进入编辑模式
+        async function loadDetail(hero, skin) {
+            try {
+                const res = await fetch(`${API_BASE_URL}/quotes/${encodeURIComponent(hero)}/${encodeURIComponent(skin)}`);
+                if(!res.ok) throw new Error("Load failed");
+                const data = await res.json();
+
+                // 设置状态
+                currentEditId = { hero: data.hero, skin: data.skin };
+                
+                // 填充表单
+                formTitle.innerText = `📝 编辑：${data.hero} - ${data.skin}`;
+                deleteBtn.style.display = 'block';
+                heroInput.value = data.hero;
+                skinInput.value = data.skin;
+                
+                // 渲染技能
+                skillsContainer.innerHTML = '';
+                if(data.skills && data.skills.length > 0) {
+                    data.skills.forEach(skill => {
+                        const skillEl = addSkillHTML(skill.name);
+                        const quotesContainer = skillEl.querySelector('.quotes-list');
+                        if(skill.quotes) {
+                            skill.quotes.forEach(quote => {
+                                addQuoteHTML(quotesContainer, quote);
+                            });
+                        }
+                    });
+                } else {
+                    addSkillHTML(); // 默认加一个空技能
+                }
+
+                showEditor();
+            } catch (e) {
+                console.error(e);
+                showToast('加载详情失败', true);
+            }
+        }
+
+        // 3. 动态添加 DOM：技能
+        function addSkillHTML(name = '') {
+            const div = document.createElement('div');
+            div.className = 'skill-editor-item';
+            div.innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                    <div style="flex:1; margin-right:15px;">
+                        <label>技能名称</label>
+                        <input type="text" class="skill-name-input" value="${escapeHtml(name)}" placeholder="例如：赋绘">
+                    </div>
+                    <button type="button" class="btn-danger" onclick="this.closest('.skill-editor-item').remove()">删除技能</button>
+                </div>
+                <div class="quotes-list"></div>
+                <button type="button" class="btn-add-block" style="font-size:0.9rem;" onclick="addQuoteToSkill(this)">+ 添加一句台词</button>
+            `;
+            skillsContainer.appendChild(div);
+            return div;
+        }
+
+        // 4. 动态添加 DOM：台词（辅助函数）
+        function addQuoteToSkill(btn) {
+            const container = btn.previousElementSibling;
+            addQuoteHTML(container);
+        }
+
+        // 5. 添加台词DOM
+        function addQuoteHTML(container, quote = { text: '', explanation: '', audio: '' }) {
+            const div = document.createElement('div');
+            div.className = 'quote-editor-item';
+            div.innerHTML = `
+                <div class="form-group">
+                    <label>台词文本</label>
+                    <div style="display:flex; gap:10px; align-items:center;">
+                        <input type="text" class="q-text" value="${escapeHtml(quote.text)}" placeholder="台词内容..." style="flex:1;">
+                        <button type="button" class="btn-ai-generate" onclick="generateExplanation(this)" title="AI生成解析">🤖 AI解析</button>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>解析 (支持 Markdown)</label>
+                    <textarea class="q-exp" placeholder="* **词语**：解释..." style="height:120px; resize:vertical;">${escapeHtml(quote.explanation || '')}</textarea>
+                    <div class="ai-loading" style="display:none; margin-top:5px; color:#3498db;">
+                        <span style="animation: spin 1s linear infinite;">⟳</span> AI正在生成解析...
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>音频链接 (URL)</label>
+                    <div style="display:flex; gap:10px;">
+                        <input type="text" class="q-audio" value="${escapeHtml(quote.audio || '')}" placeholder="http://...">
+                        <button type="button" class="btn-secondary" onclick="previewAudio(this)" title="试听">🔊</button>
+                    </div>
+                </div>
+                <div style="text-align:right;">
+                    <button type="button" class="btn-danger" style="background:transparent; color:#e74c3c; border:1px solid #e74c3c;" onclick="this.closest('.quote-editor-item').remove()">移除此条</button>
+                </div>
+            `;
+            container.appendChild(div);
+            return div;
+        }
+
+        // ============================================
+        // AI 生成功能
+        // ============================================
+        async function generateExplanation(button) {
+            const quoteItem = button.closest('.quote-editor-item');
+            const quoteTextInput = quoteItem.querySelector('.q-text');
+            const explanationTextarea = quoteItem.querySelector('.q-exp');
+            const loadingEl = quoteItem.querySelector('.ai-loading');
+            
+            const quoteText = quoteTextInput.value.trim();
+            if (!quoteText) {
+                showToast('请先输入台词文本', true);
+                return;
+            }
+            
+            // 显示加载状态
+            button.disabled = true;
+            loadingEl.style.display = 'block';
+            
+            try {
+                console.log('发送AI请求，台词:', quoteText);
+                
+                const response = await fetch(`${API_BASE_URL}/ai/parse-quote`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        quote: quoteText
+                    })
+                });
+                
+                const result = await response.json();
+                console.log('AI返回结果:', result);
+                
+                if (result.success) {
+                    explanationTextarea.value = result.explanation;
+                    showToast('AI解析生成成功！');
+                } else {
+                    console.error('AI返回错误:', result.message);
+                    showToast(`生成失败: ${result.message}`, true);
+                }
+            } catch (error) {
+                console.error('AI生成错误:', error);
+                showToast(`生成失败: ${error.message}`, true);
+            } finally {
+                button.disabled = false;
+                loadingEl.style.display = 'none';
+            }
+        }
+
+        // ============================================
+        // 核心逻辑：数据收集与保存
+        // ============================================
+        async function saveData() {
+            const btn = document.querySelector('.action-bar .btn-primary');
+            const originalText = btn.innerText;
+            btn.innerText = '⏳ 保存中...';
+            btn.disabled = true;
+
+            try {
+                // 1. 收集数据
+                const formData = {
+                    hero: heroInput.value.trim(),
+                    skin: skinInput.value.trim(),
+                    skills: []
+                };
+
+                if(!formData.hero || !formData.skin) {
+                    throw new Error("武将名和皮肤名不能为空");
+                }
+
+                // 遍历 DOM 收集技能和台词
+                document.querySelectorAll('.skill-editor-item').forEach(skillEl => {
+                    const skillName = skillEl.querySelector('.skill-name-input').value.trim();
+                    if(!skillName) return; // 跳过空名技能
+
+                    const skillObj = {
+                        name: skillName,
+                        quotes: []
+                    };
+
+                    skillEl.querySelectorAll('.quote-editor-item').forEach(quoteEl => {
+                        skillObj.quotes.push({
+                            text: quoteEl.querySelector('.q-text').value.trim(),
+                            explanation: quoteEl.querySelector('.q-exp').value,
+                            audio: quoteEl.querySelector('.q-audio').value.trim()
+                        });
+                    });
+
+                    formData.skills.push(skillObj);
+                });
+
+                // 2. 发送请求
+                let url, method;
+
+                if (currentEditId) {
+                    // 编辑模式：PUT
+                    url = `${API_BASE_URL}/quotes/${encodeURIComponent(currentEditId.hero)}/${encodeURIComponent(currentEditId.skin)}`;
+                    method = 'PUT';
+                } else {
+                    // 新建模式：POST
+                    url = `${API_BASE_URL}/quotes`;
+                    method = 'POST';
+                }
+
+                const res = await fetch(url, {
+                    method: method,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(formData)
+                });
+
+                if(!res.ok) {
+                    const err = await res.json();
+                    throw new Error(err.message || '保存失败');
+                }
+
+                // 3. 成功后续处理
+                showToast('保存成功！');
+                
+                // 如果是改名了或者新建，需要更新 currentEditId
+                currentEditId = { hero: formData.hero, skin: formData.skin };
+                
+                // 刷新侧边栏并重新定位
+                await refreshList(); 
+                
+            } catch (error) {
+                showToast(error.message, true);
+            } finally {
+                btn.innerText = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        // ============================================
+        // 辅助功能
+        // ============================================
+        async function deleteCurrent() {
+            if(!currentEditId) return;
+            if(!confirm(`确定要删除【${currentEditId.hero} - ${currentEditId.skin}】吗？此操作不可恢复。`)) return;
+
+            try {
+                const res = await fetch(`${API_BASE_URL}/quotes/${encodeURIComponent(currentEditId.hero)}/${encodeURIComponent(currentEditId.skin)}`, {
+                    method: 'DELETE'
+                });
+                
+                if(res.ok) {
+                    showToast('删除成功');
+                    currentEditId = null;
+                    refreshList();
+                    welcomeState.style.display = 'block';
+                    editorArea.style.display = 'none';
+                } else {
+                    throw new Error('删除失败');
+                }
+            } catch(e) {
+                showToast(e.message, true);
+            }
+        }
+
+        function previewAudio(btn) {
+            const input = btn.previousElementSibling;
+            const url = input.value.trim();
+            if(url) {
+                new Audio(url).play().catch(e => alert('播放失败，链接无效'));
+            } else {
+                alert('请先输入音频链接');
+            }
+        }
+
+        function showEditor() {
+            welcomeState.style.display = 'none';
+            editorArea.style.display = 'block';
+            // 移动端优化：点击后自动收起侧边栏
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.remove('sidebar-expanded');
+                document.getElementById('sidebarToggle').innerText = '☰';
+            }
+        }
+
+        function resetForm() {
+           // 简单地重新载入当前数据
+           if(currentEditId) {
+               loadDetail(currentEditId.hero, currentEditId.skin);
+           } else {
+               // 只是清空
+               heroInput.value = '';
+               skinInput.value = '';
+               skillsContainer.innerHTML = '';
+               addSkillHTML();
+           }
+        }
+
+        function showToast(msg, isError = false) {
+            const t = document.getElementById('toast');
+            t.innerText = msg;
+            t.className = isError ? 'toast error show' : 'toast show';
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function escapeHtml(text) {
+            if (!text) return "";
+            return text
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#039;");
+        }
+
+        // 搜索输入事件
+        searchInput.addEventListener('input', function(e) {
+            if (isDeveloperMode) {
+                updateSearch();
+            } else {
+                // 普通搜索模式
+                const keyword = e.target.value.toLowerCase().trim();
+                if (!keyword) {
+                    renderList(groupData(allData));
+                    return;
+                }
+                const filtered = allData.filter(item => 
+                    item.hero.toLowerCase().includes(keyword) || 
+                    item.skin.toLowerCase().includes(keyword)
+                );
+                renderList(groupData(filtered), true);
+            }
+        });
+
+        // ============================================
+        // UI 功能
+        // ============================================
+        function initSidebarToggle() {
+            const toggle = document.getElementById('sidebarToggle');
+            const sb = document.getElementById('sidebar');
+            toggle.addEventListener('click', () => {
+                sb.classList.toggle('sidebar-expanded');
+                toggle.innerText = sb.classList.contains('sidebar-expanded') ? '✕' : '☰';
+            });
+        }
+    </script>
+
+    <script src="樱花散落.js"></script>
+    <script src="xuanzhi-theme.js"></script>
+</body>
+</html>
