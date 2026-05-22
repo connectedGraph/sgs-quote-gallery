@@ -576,7 +576,8 @@
         // 全局状态与配置
         // ============================================
         const API_BASE_URL = '/api';
-        let allData = [];
+        let sidebarData = [];        // [{hero, skin, missingAudio}] — lightweight, used for sidebar/search
+        let fullDataPromise = null;  // Promise<Array<fullItem>> — lazy-loaded only when deep search needs skills/quotes
         let currentEditId = null;
         let parsedData = null;
         let isDeveloperMode = false;
@@ -642,7 +643,7 @@
                 toggleOptionsBtn.innerHTML = '<span>选项</span><span>▼</span>';
                 
                 // 恢复原始列表
-                renderList(groupData(allData));
+                renderList(groupData(sidebarData));
             }
         }
 
@@ -683,9 +684,9 @@
         }
 
         // 执行搜索
-        function performSearch() {
+        async function performSearch() {
             const keyword = searchInput.value.toLowerCase().trim();
-            
+
             // 获取选中的搜索字段
             const searchFields = {
                 hero: searchHero.checked,
@@ -693,70 +694,77 @@
                 skillName: searchSkillName.checked,
                 quoteText: searchQuoteText.checked
             };
-            
+
             // 如果没有选中任何搜索字段，使用默认值
-            const hasSelectedFields = searchFields.hero || searchFields.skin || 
+            const hasSelectedFields = searchFields.hero || searchFields.skin ||
                                      searchFields.skillName || searchFields.quoteText;
-            
+
             if (!hasSelectedFields) {
                 searchFields.hero = true;
                 searchFields.skin = true;
                 searchHero.checked = true;
                 searchSkin.checked = true;
             }
-            
+
             const showMissingAudioOnly = showMissingAudio.checked;
-            
-            searchResults = [];
-            
-            allData.forEach(item => {
-                let matches = [];
-                let hasMissingAudio = false;
-                
-                // 检查是否缺少音频
-                if (showMissingAudioOnly) {
-                    hasMissingAudio = hasMissingAudioInItem(item);
+
+            // 是否需要深度数据（技能/台词级搜索）：仅在有关键词且勾选了对应字段时才付费拉取完整数据
+            const needsDeepData =
+                keyword && (searchFields.skillName || searchFields.quoteText);
+
+            let dataset;
+            if (needsDeepData) {
+                try {
+                    dataset = await getFullData();
+                } catch (e) {
+                    showToast('加载完整数据失败', true);
+                    return;
                 }
-                
+            } else {
+                dataset = sidebarData;
+            }
+
+            searchResults = [];
+
+            dataset.forEach(item => {
+                let matches = [];
+                // 优先使用 summary 自带标记，否则按需计算
+                const hasMissingAudio = showMissingAudioOnly
+                    ? (typeof item.missingAudio === 'boolean'
+                        ? item.missingAudio
+                        : hasMissingAudioInItem(item))
+                    : false;
+
                 // 如果没有搜索词但勾选了显示缺少音频，直接添加
                 if (!keyword && showMissingAudioOnly && hasMissingAudio) {
                     searchResults.push({
-                        item: item,
+                        item: { hero: item.hero, skin: item.skin, missingAudio: true },
                         matches: [],
                         hasMissingAudio: true,
                         matchedFields: []
                     });
                     return;
                 }
-                
+
                 // 如果有搜索词，进行搜索
                 if (keyword) {
                     const matchedFields = [];
-                    
+
                     // 搜索武将名称
                     if (searchFields.hero && item.hero.toLowerCase().includes(keyword)) {
-                        matches.push({
-                            type: 'hero',
-                            field: 'hero',
-                            value: item.hero
-                        });
+                        matches.push({ type: 'hero', field: 'hero', value: item.hero });
                         matchedFields.push('hero');
                     }
-                    
+
                     // 搜索皮肤名称
                     if (searchFields.skin && item.skin.toLowerCase().includes(keyword)) {
-                        matches.push({
-                            type: 'skin',
-                            field: 'skin',
-                            value: item.skin
-                        });
+                        matches.push({ type: 'skin', field: 'skin', value: item.skin });
                         matchedFields.push('skin');
                     }
-                    
-                    // 搜索技能名称和台词文本
+
+                    // 搜索技能名称和台词文本（仅当 dataset 是完整数据时 item.skills 才存在）
                     if (item.skills && (searchFields.skillName || searchFields.quoteText)) {
                         item.skills.forEach(skill => {
-                            // 搜索技能名称
                             if (searchFields.skillName && skill.name.toLowerCase().includes(keyword)) {
                                 matches.push({
                                     type: 'skill',
@@ -766,8 +774,7 @@
                                 });
                                 matchedFields.push('skill');
                             }
-                            
-                            // 搜索台词文本
+
                             if (searchFields.quoteText && skill.quotes) {
                                 skill.quotes.forEach((quote, quoteIndex) => {
                                     if (quote.text.toLowerCase().includes(keyword)) {
@@ -784,23 +791,19 @@
                             }
                         });
                     }
-                    
-                    // 如果找到匹配项或需要显示缺少音频的项
+
                     if (matches.length > 0 || (showMissingAudioOnly && hasMissingAudio)) {
                         searchResults.push({
-                            item: item,
+                            item: { hero: item.hero, skin: item.skin, missingAudio: hasMissingAudio },
                             matches: matches,
                             hasMissingAudio: hasMissingAudio,
-                            matchedFields: [...new Set(matchedFields)] // 去重
+                            matchedFields: [...new Set(matchedFields)]
                         });
                     }
                 }
             });
-            
-            // 更新搜索统计
+
             updateSearchStats();
-            
-            // 渲染搜索结果
             renderSearchResults();
         }
 
@@ -840,8 +843,8 @@
                 statsText = `显示 <span>${searchResults.length}</span> 个缺少音频的皮肤`;
                 searchCount.textContent = searchResults.length;
             } else {
-                statsText = `显示 <span>${allData.length}</span> 个皮肤`;
-                searchCount.textContent = allData.length;
+                statsText = `显示 <span>${sidebarData.length}</span> 个皮肤`;
+                searchCount.textContent = sidebarData.length;
             }
             
             searchStats.innerHTML = `<div>${statsText}</div>`;
@@ -864,15 +867,16 @@
             });
             
             sidebarListEl.innerHTML = '';
-            
+            const fragment = document.createDocumentFragment();
+
             for (const hero in groups) {
                 const groupTitle = document.createElement('div');
                 groupTitle.className = 'hero-group-title';
                 groupTitle.innerHTML = `<span>${escapeHtml(hero)}</span> <span>▼</span>`;
-                
+
                 const groupList = document.createElement('div');
                 groupList.className = 'hero-group-list expanded';
-                
+
                 groupTitle.addEventListener('click', () => {
                     const isExpanded = groupList.classList.toggle('expanded');
                     groupTitle.querySelector('span:last-child').innerText = isExpanded ? '▼' : '▶';
@@ -882,13 +886,13 @@
                     const item = result.item;
                     const navItem = document.createElement('div');
                     navItem.className = 'nav-item';
-                    
+
                     // 添加皮肤名（如果需要，添加缺少音频图标）
                     let skinText = escapeHtml(item.skin);
                     if (result.hasMissingAudio) {
                         skinText += '<span class="no-audio-icon" title="缺少音频链接"></span>';
                     }
-                    
+
                     // 如果有匹配项，高亮显示
                     if (result.matches.length > 0) {
                         const skinMatches = result.matches.filter(m => m.type === 'skin');
@@ -896,9 +900,9 @@
                             skinText = highlightText(item.skin, skinMatches[0].value, 'skin');
                         }
                     }
-                    
+
                     navItem.innerHTML = skinText;
-                    
+
                     // 添加点击事件
                     navItem.addEventListener('click', (e) => {
                         // 如果点击的是缺少音频图标，不触发加载详情
@@ -906,13 +910,14 @@
                             loadDetailWithHighlight(item.hero, item.skin, result.matches);
                         }
                     });
-                    
+
                     groupList.appendChild(navItem);
                 });
 
-                sidebarListEl.appendChild(groupTitle);
-                sidebarListEl.appendChild(groupList);
+                fragment.appendChild(groupTitle);
+                fragment.appendChild(groupList);
             }
+            sidebarListEl.appendChild(fragment);
         }
 
         // 高亮文本（带类型）
@@ -1716,21 +1721,35 @@ function applyMergeMode() {
         // ============================================
         async function refreshList() {
             try {
-                const res = await fetch(`${API_BASE_URL}/quotes`);
-                allData = await res.json();
+                const res = await fetch(`${API_BASE_URL}/quotes?summary=1`);
+                sidebarData = await res.json();
+                fullDataPromise = null; // invalidate any cached deep data
                 if (isDeveloperMode) {
                     updateSearchStats();
                     if (searchInput.value.trim() || showMissingAudio.checked) {
                         performSearch();
                     } else {
-                        renderList(groupData(allData));
+                        renderList(groupData(sidebarData));
                     }
                 } else {
-                    renderList(groupData(allData));
+                    renderList(groupData(sidebarData));
                 }
             } catch (e) {
                 showToast('加载列表失败', true);
             }
+        }
+
+        // Lazy-load the full dataset; only paid for when deep search (skill/quote) is actually used.
+        function getFullData() {
+            if (!fullDataPromise) {
+                fullDataPromise = fetch(`${API_BASE_URL}/quotes`)
+                    .then((r) => r.json())
+                    .catch((e) => {
+                        fullDataPromise = null;
+                        throw e;
+                    });
+            }
+            return fullDataPromise;
         }
 
         function groupData(data) {
@@ -1744,14 +1763,15 @@ function applyMergeMode() {
 
         function renderList(groups, defaultExpand = false) {
             sidebarListEl.innerHTML = '';
+            const fragment = document.createDocumentFragment();
             for (const hero in groups) {
                 const groupTitle = document.createElement('div');
                 groupTitle.className = 'hero-group-title';
-                groupTitle.innerHTML = `<span>${hero}</span> <span>${defaultExpand ? '▼' : '▶'}</span>`;
-                
+                groupTitle.innerHTML = `<span>${escapeHtml(hero)}</span> <span>${defaultExpand ? '▼' : '▶'}</span>`;
+
                 const groupList = document.createElement('div');
                 groupList.className = `hero-group-list ${defaultExpand ? 'expanded' : ''}`;
-                
+
                 groupTitle.addEventListener('click', () => {
                     const isExpanded = groupList.classList.toggle('expanded');
                     groupTitle.querySelector('span:last-child').innerText = isExpanded ? '▼' : '▶';
@@ -1760,28 +1780,32 @@ function applyMergeMode() {
                 groups[hero].forEach(item => {
                     const navItem = document.createElement('div');
                     navItem.className = 'nav-item';
-                    navItem.innerText = item.skin;
+
+                    let skinText = escapeHtml(item.skin);
+                    if (item.missingAudio) {
+                        skinText += '<span class="no-audio-icon" title="缺少音频链接"></span>';
+                    }
+                    navItem.innerHTML = skinText;
+
                     navItem.addEventListener('click', () => {
                         if (isDeveloperMode && searchResults.length > 0) {
-                            // 在开发者模式下，找到对应的搜索结果
-                            const result = searchResults.find(r => 
+                            const result = searchResults.find(r =>
                                 r.item.hero === item.hero && r.item.skin === item.skin
                             );
                             if (result) {
                                 loadDetailWithHighlight(item.hero, item.skin, result.matches);
-                            } else {
-                                loadDetail(item.hero, item.skin);
+                                return;
                             }
-                        } else {
-                            loadDetail(item.hero, item.skin);
                         }
+                        loadDetail(item.hero, item.skin);
                     });
                     groupList.appendChild(navItem);
                 });
 
-                sidebarListEl.appendChild(groupTitle);
-                sidebarListEl.appendChild(groupList);
+                fragment.appendChild(groupTitle);
+                fragment.appendChild(groupList);
             }
+            sidebarListEl.appendChild(fragment);
         }
 
         // ============================================
@@ -2119,11 +2143,11 @@ function applyMergeMode() {
                 // 普通搜索模式
                 const keyword = e.target.value.toLowerCase().trim();
                 if (!keyword) {
-                    renderList(groupData(allData));
+                    renderList(groupData(sidebarData));
                     return;
                 }
-                const filtered = allData.filter(item => 
-                    item.hero.toLowerCase().includes(keyword) || 
+                const filtered = sidebarData.filter(item =>
+                    item.hero.toLowerCase().includes(keyword) ||
                     item.skin.toLowerCase().includes(keyword)
                 );
                 renderList(groupData(filtered), true);

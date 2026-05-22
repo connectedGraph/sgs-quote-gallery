@@ -1,5 +1,10 @@
 import { NextResponse } from "next/server";
-import { createItem, getAllItems, getDetailPageData } from "@/lib/quotes-data";
+import {
+  createItem,
+  getAllItems,
+  getDetailPageData,
+  getSidebarSummaries,
+} from "@/lib/quotes-data";
 
 export const dynamic = "force-dynamic";
 
@@ -7,6 +12,7 @@ export async function GET(request) {
   const { searchParams } = new URL(request.url);
   const hero = searchParams.get("hero");
   const skin = searchParams.get("skin");
+  const summary = searchParams.get("summary");
 
   if (hero && skin) {
     const item = getDetailPageData(hero, skin);
@@ -15,6 +21,10 @@ export async function GET(request) {
 
   if (hero) {
     return NextResponse.json(getAllItems().filter((entry) => entry.hero === hero));
+  }
+
+  if (summary === "1") {
+    return NextResponse.json(getSidebarSummaries());
   }
 
   return NextResponse.json(getAllItems());
